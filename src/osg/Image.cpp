@@ -1317,12 +1317,12 @@ void Image::setImage(int s,int t,int r,
 	// handle the _OES pixel formats so map them to the appropriate equivilants.
 	switch (internalFormat)
 	{
-	case(1): internalFormat = GL_LUMINANCE; break;
-	case(2): internalFormat = GL_LUMINANCE_ALPHA; break;
-	case(3): internalFormat = GL_RGB; break;
-	case(4): internalFormat = GL_RGBA; break;
-	case(GL_RGB8_OES): internalFormat = GL_RGB; break;
-	case(GL_RGBA8_OES): internalFormat = GL_RGBA; break;
+	case(1): _pixelFormat = GL_LUMINANCE; break;
+	case(2): _pixelFormat = GL_LUMINANCE_ALPHA; break;
+	case(3): _pixelFormat = GL_RGB; break;
+	case(4): _pixelFormat = GL_RGBA; break;
+	case(GL_RGB8_OES): _pixelFormat = GL_RGB; break;
+	case(GL_RGBA8_OES): _pixelFormat = GL_RGBA; break;
 	default: break;
 	}
 #elif defined(OSG_GL3_AVAILABLE)
@@ -1337,6 +1337,8 @@ void Image::setImage(int s,int t,int r,
 	case(4): _pixelFormat = GL_RGBA; break;
 	default: _pixelFormat = format; break;
 	}
+#else
+	_pixelFormat = format;
 #endif
     _dataType       = type;
 
