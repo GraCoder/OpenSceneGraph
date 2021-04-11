@@ -1337,6 +1337,8 @@ void Image::setImage(int s,int t,int r,
 	case(4): _pixelFormat = GL_RGBA; break;
 	default: _pixelFormat = format; break;
 	}
+#else
+    _pixelFormat = format;
 #endif
     _dataType       = type;
 
