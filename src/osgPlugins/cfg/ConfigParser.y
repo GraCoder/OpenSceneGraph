@@ -34,7 +34,10 @@
 #include <Producer/CameraConfig>
 
 
+<<<<<<< HEAD
 using namespace std;
+=======
+>>>>>>> upstream/master
 using namespace Producer;
 
 static void ConfigParser_error( const char * );

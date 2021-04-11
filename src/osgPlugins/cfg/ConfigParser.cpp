@@ -235,7 +235,10 @@
 #include "CameraConfig.h"
 
 
+<<<<<<< HEAD
 using namespace std;
+=======
+>>>>>>> upstream/master
 using namespace osgProducer;
 
 static void ConfigParser_error( const char * );

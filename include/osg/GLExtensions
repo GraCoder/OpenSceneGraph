@@ -549,6 +549,10 @@ class OSG_EXPORT GLExtensions : public osg::Referenced
         bool isTextureCompressionETC2Supported;
         bool isTextureCompressionRGTCSupported;
         bool isTextureCompressionPVRTCSupported;
+<<<<<<< HEAD
+=======
+        bool isTextureCompressionASTCSupported;
+>>>>>>> upstream/master
         bool isTextureMirroredRepeatSupported;
         bool isTextureEdgeClampSupported;
         bool isTextureBorderClampSupported;
@@ -558,6 +562,10 @@ class OSG_EXPORT GLExtensions : public osg::Referenced
         bool isShadowSupported;
         bool isShadowAmbientSupported;
         bool isTextureMaxLevelSupported;
+<<<<<<< HEAD
+=======
+        bool isTextureLODBiasSupported;
+>>>>>>> upstream/master
         GLint maxTextureSize;
         bool isClientStorageSupported;
         bool isTextureIntegerEXTSupported;

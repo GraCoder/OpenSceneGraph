@@ -1312,6 +1312,7 @@ void Image::setImage(int s,int t,int r,
     _r = r;
 
     _internalTextureFormat = internalTextureFormat;
+<<<<<<< HEAD
 #if defined (OSG_GLES1_AVAILABLE) || defined (OSG_GLES2_AVAILABLE) || defined (OSG_GLES3_AVAILABLE)
 	// GLES doesn't cope with internal formats of 1,2,3 and 4 and glTexImage doesn't
 	// handle the _OES pixel formats so map them to the appropriate equivilants.
@@ -1340,6 +1341,9 @@ void Image::setImage(int s,int t,int r,
 #else
     _pixelFormat = format;
 #endif
+=======
+    _pixelFormat    = format;
+>>>>>>> upstream/master
     _dataType       = type;
 
     setData(data,mode);
