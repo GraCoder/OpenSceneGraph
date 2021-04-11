@@ -755,11 +755,7 @@ GLExtensions::GLExtensions(unsigned int in_contextID):
     isOcclusionQuerySupported = validContext && osg::isGLExtensionSupported(contextID, "GL_NV_occlusion_query");
     isARBOcclusionQuerySupported = validContext && (OSG_GL3_FEATURES || osg::isGLExtensionSupported(contextID, "GL_ARB_occlusion_query"));
 
-<<<<<<< HEAD
-    isTimerQuerySupported = validContext && osg::isGLExtensionSupported(contextID, "GL_EXT_timer_query");
-=======
     isTimerQuerySupported = validContext && (osg::isGLExtensionSupported(contextID, "GL_EXT_timer_query") || osg::isGLExtensionSupported(contextID, "GL_EXT_disjoint_timer_query"));
->>>>>>> upstream/master
     isARBTimerQuerySupported = validContext && osg::isGLExtensionSupported(contextID, "GL_ARB_timer_query");
 
 
@@ -794,21 +790,6 @@ GLExtensions::GLExtensions(unsigned int in_contextID):
     setGLExtensionFuncPtr(glGetOcclusionQueryiv, "glGetOcclusionQueryiv","glGetOcclusionQueryivNV", validContext);
     setGLExtensionFuncPtr(glGetOcclusionQueryuiv, "glGetOcclusionQueryuiv","glGetOcclusionQueryuivNV", validContext);
 
-<<<<<<< HEAD
-    setGLExtensionFuncPtr(glGenQueries, "glGenQueries", "glGenQueriesARB", validContext);
-    setGLExtensionFuncPtr(glDeleteQueries, "glDeleteQueries", "glDeleteQueriesARB", validContext);
-    setGLExtensionFuncPtr(glIsQuery, "glIsQuery", "glIsQueryARB", validContext);
-    setGLExtensionFuncPtr(glBeginQuery, "glBeginQuery", "glBeginQueryARB", validContext);
-    setGLExtensionFuncPtr(glEndQuery, "glEndQuery", "glEndQueryARB", validContext);
-    setGLExtensionFuncPtr(glBeginQueryIndexed, "glBeginQueryIndexed", "glBeginQueryIndexedARB", validContext);
-    setGLExtensionFuncPtr(glEndQueryIndexed, "glEndQueryIndexed", "glEndQueryIndexedARB", validContext);
-    setGLExtensionFuncPtr(glGetQueryiv, "glGetQueryiv", "glGetQueryivARB", validContext);
-    setGLExtensionFuncPtr(glGetQueryObjectiv, "glGetQueryObjectiv","glGetQueryObjectivARB", validContext);
-    setGLExtensionFuncPtr(glGetQueryObjectuiv, "glGetQueryObjectuiv","glGetQueryObjectuivARB", validContext);
-    setGLExtensionFuncPtr(glGetQueryObjectui64v, "glGetQueryObjectui64v","glGetQueryObjectui64vEXT", validContext);
-    setGLExtensionFuncPtr(glQueryCounter, "glQueryCounter", validContext);
-    setGLExtensionFuncPtr(glGetInteger64v, "glGetInteger64v", validContext);
-=======
     setGLExtensionFuncPtr(glGenQueries, "glGenQueries", "glGenQueriesARB", "glGenQueriesEXT", validContext);
     setGLExtensionFuncPtr(glDeleteQueries, "glDeleteQueries", "glDeleteQueriesARB", "glDeleteQueriesEXT", validContext);
     setGLExtensionFuncPtr(glIsQuery, "glIsQuery", "glIsQueryARB", "glIsQueryEXT", validContext);
@@ -822,7 +803,6 @@ GLExtensions::GLExtensions(unsigned int in_contextID):
     setGLExtensionFuncPtr(glGetQueryObjectui64v, "glGetQueryObjectui64v","glGetQueryObjectui64vEXT", "glGetQueryObjectui64vEXT", validContext);
     setGLExtensionFuncPtr(glQueryCounter, "glQueryCounter", "glQueryCounterEXT", validContext);
     setGLExtensionFuncPtr(glGetInteger64v, "glGetInteger64v", "glGetInteger64vEXT", validContext);
->>>>>>> upstream/master
 
 
     // SampleMaski functionality
@@ -879,15 +859,6 @@ GLExtensions::GLExtensions(unsigned int in_contextID):
     isTextureFilterAnisotropicSupported = validContext && isGLExtensionSupported(contextID,"GL_EXT_texture_filter_anisotropic");
     isTextureSwizzleSupported = validContext && isGLExtensionSupported(contextID,"GL_ARB_texture_swizzle");
     isTextureCompressionARBSupported = validContext && (builtInSupport || isGLExtensionOrVersionSupported(contextID,"GL_ARB_texture_compression", 1.3f));
-<<<<<<< HEAD
-    isTextureCompressionS3TCSupported = validContext && (isGLExtensionSupported(contextID,"GL_EXT_texture_compression_s3tc") || isGLExtensionSupported(contextID, "GL_S3_s3tc"));
-    isTextureCompressionPVRTC2BPPSupported = validContext && isGLExtensionSupported(contextID,"GL_IMG_texture_compression_pvrtc");
-    isTextureCompressionPVRTC4BPPSupported = isTextureCompressionPVRTC2BPPSupported;//covered by same extension
-    isTextureCompressionETCSupported = validContext && isGLExtensionSupported(contextID,"GL_OES_compressed_ETC1_RGB8_texture");
-    isTextureCompressionETC2Supported = validContext && isGLExtensionSupported(contextID,"GL_ARB_ES3_compatibility");
-    isTextureCompressionRGTCSupported = validContext && isGLExtensionSupported(contextID,"GL_EXT_texture_compression_rgtc");
-    isTextureCompressionPVRTCSupported = validContext && isGLExtensionSupported(contextID,"GL_IMG_texture_compression_pvrtc");
-=======
     isTextureCompressionS3TCSupported = validContext && (isGLExtensionSupported(contextID,"GL_EXT_texture_compression_s3tc") ||
                                                          isGLExtensionSupported(contextID, "GL_S3_s3tc") ||
                                                          isGLExtensionSupported(contextID, "WEBGL_compressed_texture_s3tc") ||
@@ -908,7 +879,6 @@ GLExtensions::GLExtensions(unsigned int in_contextID):
                                                          isGLExtensionSupported(contextID, "GL_KHR_texture_compression_astc_ldr") ||
                                                          isGLExtensionSupported(contextID, "GL_OES_texture_compression_astc") ||
                                                          isGLExtensionSupported(contextID, "WEBGL_compressed_texture_astc"));
->>>>>>> upstream/master
 
     isTextureMirroredRepeatSupported = validContext &&
                                        (builtInSupport ||
@@ -950,9 +920,6 @@ GLExtensions::GLExtensions(unsigned int in_contextID):
     {
         maxTextureSize = osg_max_size;
     }
-<<<<<<< HEAD
-    isTextureMaxLevelSupported = (glVersion >= 1.2f);
-=======
 
 #if defined(__EMSCRIPTEN__)
     isTextureMaxLevelSupported = (glVersion >= 3.0f);    // WebGL 2.0 (OpenGL ES 3.0)
@@ -961,23 +928,14 @@ GLExtensions::GLExtensions(unsigned int in_contextID):
     isTextureMaxLevelSupported = (glVersion >= 1.2f);
     isTextureLODBiasSupported  = (glVersion >= 1.2f) || isGLExtensionSupported(contextID, "GL_EXT_texture_lod_bias");
 #endif
->>>>>>> upstream/master
 
     isTextureStorageEnabled = validContext && ((glVersion >= 4.2f) || isGLExtensionSupported(contextID, "GL_ARB_texture_storage"));
 
     if (isTextureStorageEnabled)
     {
         std::string value;
-<<<<<<< HEAD
-        if (getEnvVar("OSG_GL_TEXTURE_STORAGE", value))
-        {
-            if (value=="OFF" || value=="DISABLE") isTextureStorageEnabled = false;
-            else isTextureStorageEnabled = true;
-        }
-=======
         if (getEnvVar("OSG_GL_TEXTURE_STORAGE", value) && (value == "OFF" || value == "DISABLE"))
             isTextureStorageEnabled = false;
->>>>>>> upstream/master
     }
 
     setGLExtensionFuncPtr(glTexStorage1D,"glTexStorage1D","glTexStorage1DARB", validContext);
@@ -1153,14 +1111,10 @@ GLExtensions::GLExtensions(unsigned int in_contextID):
     setGLExtensionFuncPtr(glGenRenderbuffers, "glGenRenderbuffers", "glGenRenderbuffersEXT", "glGenRenderbuffersOES", validContext);
     setGLExtensionFuncPtr(glRenderbufferStorage, "glRenderbufferStorage", "glRenderbufferStorageEXT", "glRenderbufferStorageOES", validContext);
     setGLExtensionFuncPtr(glRenderbufferStorageMultisample, "glRenderbufferStorageMultisample", "glRenderbufferStorageMultisampleEXT", "glRenderbufferStorageMultisampleOES", validContext);
-<<<<<<< HEAD
-    setGLExtensionFuncPtr(glRenderbufferStorageMultisampleCoverageNV, "glRenderbufferStorageMultisampleCoverageNV", validContext);
-=======
     if (isGLExtensionSupported(contextID, "GL_NV_framebuffer_multisample_coverage"))
         setGLExtensionFuncPtr(glRenderbufferStorageMultisampleCoverageNV, "glRenderbufferStorageMultisampleCoverageNV", validContext);
     else
         glRenderbufferStorageMultisampleCoverageNV = NULL;
->>>>>>> upstream/master
     setGLExtensionFuncPtr(glBindFramebuffer, "glBindFramebuffer", "glBindFramebufferEXT", "glBindFramebufferOES", validContext);
     setGLExtensionFuncPtr(glDeleteFramebuffers, "glDeleteFramebuffers", "glDeleteFramebuffersEXT", "glDeleteFramebuffersOES", validContext);
     setGLExtensionFuncPtr(glGenFramebuffers, "glGenFramebuffers", "glGenFramebuffersEXT", "glGenFramebuffersOES", validContext);

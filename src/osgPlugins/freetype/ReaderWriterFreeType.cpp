@@ -15,10 +15,7 @@ class ReaderWriterFreeType : public osgDB::ReaderWriter
             supportsExtension("pfb","type1 binary format");
             supportsExtension("pfa","type2 ascii format");
             supportsExtension("cid","Postscript CID-Fonts format");
-<<<<<<< HEAD
-=======
             supportsExtension("otf","OpenType format");
->>>>>>> upstream/master
             supportsExtension("cff","OpenType format");
             supportsExtension("cef","OpenType format");
             supportsExtension("fon","Windows bitmap fonts format");
