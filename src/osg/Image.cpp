@@ -1312,34 +1312,7 @@ void Image::setImage(int s,int t,int r,
     _r = r;
 
     _internalTextureFormat = internalTextureFormat;
-#if defined (OSG_GLES1_AVAILABLE) || defined (OSG_GLES2_AVAILABLE) || defined (OSG_GLES3_AVAILABLE)
-	// GLES doesn't cope with internal formats of 1,2,3 and 4 and glTexImage doesn't
-	// handle the _OES pixel formats so map them to the appropriate equivilants.
-	switch (internalFormat)
-	{
-	case(1): _pixelFormat = GL_LUMINANCE; break;
-	case(2): _pixelFormat = GL_LUMINANCE_ALPHA; break;
-	case(3): _pixelFormat = GL_RGB; break;
-	case(4): _pixelFormat = GL_RGBA; break;
-	case(GL_RGB8_OES): _pixelFormat = GL_RGB; break;
-	case(GL_RGBA8_OES): _pixelFormat = GL_RGBA; break;
-	default: break;
-	}
-#elif defined(OSG_GL3_AVAILABLE)
-	switch (format)
-	{
-	case(GL_INTENSITY): _pixelFormat = GL_RED; break; // should it be swizzled to match RGBA(INTENSITY, INTENSITY, INTENSITY, INTENSITY)?
-	case(GL_LUMINANCE): _pixelFormat = GL_RED; break; // should it be swizzled to match RGBA(LUMINANCE, LUMINANCE, LUMINANCE, 1.0)?
-	case(1): _pixelFormat = GL_RED; break; // or should this be GL_ALPHA?
-	case(2): _pixelFormat = GL_RG; break; // should we assume GL_LUMINANCE_ALPHA?
-	case(GL_LUMINANCE_ALPHA): _pixelFormat = GL_RG; break; // should it be swizlled to match RGAB(LUMUNIANCE, LUMINANCE, LUMINANCE, ALPHA)?
-	case(3): _pixelFormat = GL_RGB; break;
-	case(4): _pixelFormat = GL_RGBA; break;
-	default: _pixelFormat = format; break;
-	}
-#else
-    _pixelFormat = format;
-#endif
+    _pixelFormat    = format;
     _dataType       = type;
 
     setData(data,mode);
