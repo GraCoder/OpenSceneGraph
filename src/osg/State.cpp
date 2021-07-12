@@ -176,6 +176,13 @@ State::State():
     _vas = 0;
 }
 
+void osg::State::setGraphicsContext(GraphicsContext* context)
+{
+    static atomic_int stateId = 0;
+    _stateID = stateId++;
+    _graphicsContext = context;
+}
+
 State::~State()
 {
     // delete the GLExtensions object associated with this osg::State.

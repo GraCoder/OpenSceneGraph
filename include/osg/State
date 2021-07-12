@@ -89,9 +89,10 @@ class OSG_EXPORT State : public Referenced
 
         State();
 
+        inline int32_t getStateID() { return _stateID; }
 
         /** Set the graphics context associated with that owns this State object.*/
-        void setGraphicsContext(GraphicsContext* context) { _graphicsContext = context; }
+        void setGraphicsContext(GraphicsContext* context);
 
         /** Get the graphics context associated with that owns this State object.*/
         GraphicsContext* getGraphicsContext() { return _graphicsContext; }
@@ -1131,6 +1132,8 @@ class OSG_EXPORT State : public Referenced
     protected:
 
         virtual ~State();
+
+        int32_t                     _stateID;
 
         GraphicsContext*            _graphicsContext;
         unsigned int                _contextID;

@@ -552,12 +552,10 @@ inline void Drawable::draw(RenderInfo& renderInfo) const
     bool useVertexArrayObject = state.useVertexArrayObject(_useVertexArrayObject);
     if (useVertexArrayObject)
     {
-        unsigned int contextID = renderInfo.getContextID();
-
-        VertexArrayState* vas = _vertexArrayStateList[contextID].get();
+        VertexArrayState* vas = _vertexArrayStateList[state.getStateID()].get();
         if (!vas)
         {
-            _vertexArrayStateList[contextID] = vas = createVertexArrayState(renderInfo);
+            _vertexArrayStateList[state.getStateID()] = vas = createVertexArrayState(renderInfo);
         }
         else
         {
