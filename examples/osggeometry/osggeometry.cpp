@@ -36,8 +36,14 @@
 
 #include <osg/Math>
 
+#include <osgUI/PushButton>
+
 #include <iostream>
 
+#include <thread>
+#include <Windows.h>
+#include <osgViewer/api/Win32/GraphicsHandleWin32>
+#include <osgViewer/api/Win32/GraphicsWindowWin32>
 
 // This demo illustrates how to create the various different types of geometry that
 // the osg::Geometry class can represent.  This demo uses the OpenGL red book diagram of different
@@ -657,15 +663,15 @@ osg::Node* createBackground()
     {
         osg::Vec2(0,1),
         osg::Vec2(0,0),
-        osg::Vec2(1,0),
-        osg::Vec2(1,1)
+osg::Vec2(1, 0),
+osg::Vec2(1, 1)
     };
 
-    int numTexCoords = sizeof(myTexCoords)/sizeof(osg::Vec2);
+    int numTexCoords = sizeof(myTexCoords) / sizeof(osg::Vec2);
 
     // pass the created tex coord array to the points geometry object,
     // and use it to set texture unit 0.
-    polyGeom->setTexCoordArray(0,new osg::Vec2Array(numTexCoords,myTexCoords));
+    polyGeom->setTexCoordArray(0, new osg::Vec2Array(numTexCoords, myTexCoords));
 
     // we'll use indices and DrawElements to define the primitive this time.
     unsigned short myIndices[] =
@@ -676,13 +682,13 @@ osg::Node* createBackground()
         2
     };
 
-    int numIndices = sizeof(myIndices)/sizeof(unsigned short);
+    int numIndices = sizeof(myIndices) / sizeof(unsigned short);
 
     // There are three variants of the DrawElements osg::Primitive, UByteDrawElements which
     // contains unsigned char indices, UShortDrawElements which contains unsigned short indices,
     // and UIntDrawElements which contains ... unsigned int indices.
     // The first parameter to DrawElements is
-    polyGeom->addPrimitiveSet(new osg::DrawElementsUShort(osg::PrimitiveSet::TRIANGLE_STRIP,numIndices,myIndices));
+    polyGeom->addPrimitiveSet(new osg::DrawElementsUShort(osg::PrimitiveSet::TRIANGLE_STRIP, numIndices, myIndices));
 
     // new we need to add the texture to the Drawable, we do so by creating a
     // StateSet to contain the Texture2D StateAttribute.
@@ -692,7 +698,7 @@ osg::Node* createBackground()
     osg::Texture2D* texture = new osg::Texture2D;
     texture->setImage(image);
 
-    stateset->setTextureAttributeAndModes(0, texture,osg::StateAttribute::ON);
+    stateset->setTextureAttributeAndModes(0, texture, osg::StateAttribute::ON);
 
     polyGeom->setStateSet(stateset);
 
@@ -706,7 +712,7 @@ osg::Node* createBackground()
 
     // Turn off the lighting (see note in createScene(), above).
     geode->getOrCreateStateSet()->setMode(GL_LIGHTING,
-                    osg::StateAttribute::OFF | osg::StateAttribute::PROTECTED);
+        osg::StateAttribute::OFF | osg::StateAttribute::PROTECTED);
 
     // create a transform to move the background back and forward with.
     osg::MatrixTransform* transform = new osg::MatrixTransform();
@@ -716,19 +722,53 @@ osg::Node* createBackground()
     return transform;
 }
 
-int main(int, char **)
+int main(int, char**)
 {
     // create the model
     osg::Group* root = new osg::Group;
-    root->addChild( createScene() );
-    root->addChild( createBackground() );
+    root->addChild(createScene());
+    root->addChild(createBackground());
 
     //osgDB::writeNodeFile(*root,"geometry.osgt");
 
     osgViewer::Viewer viewer;
 
+    if (0) {
+        osg::ref_ptr<osg::GraphicsContext::Traits> traits = new osg::GraphicsContext::Traits;
+
+        traits->x = 50;
+        traits->y = 50;
+        traits->width = 600;
+        traits->height = 480;
+        traits->windowDecoration = true;
+        traits->doubleBuffer = true;
+        traits->sharedContext = 0;
+        traits->readDISPLAY();
+        traits->setUndefinedScreenDetailsToDefaultScreen();
+
+        osg::ref_ptr<osg::GraphicsContext> gc = osg::GraphicsContext::createGraphicsContext(traits.get());
+
+        osg::ref_ptr<osg::Camera> camera = new osg::Camera;
+        camera->setGraphicsContext(gc.get());
+        camera->setViewport(new osg::Viewport(0, 0, traits->width, traits->height));
+        GLenum buffer = traits->doubleBuffer ? GL_BACK : GL_FRONT;
+        camera->setDrawBuffer(buffer);
+        camera->setReadBuffer(buffer);
+
+        // add this slave camera to the viewer, with a shift left of the projection matrix
+        //viewer.addSlave(camera.get());
+        camera->setProjectionMatrix(viewer.getCamera()->getProjectionMatrix());
+        viewer.setCamera(camera);
+    }
+
+    if (1) {
+        auto btn = new osgUI::PushButton;
+        root->addChild(btn);
+        btn->setExtents(osg::BoundingBoxf(-10,-10, -10, 10, 10, 10));
+        btn->setText("x");
+    }
+
     // add model to viewer.
     viewer.setSceneData( root );
-
     return viewer.run();
 }

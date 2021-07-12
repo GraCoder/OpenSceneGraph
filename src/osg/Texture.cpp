@@ -2494,7 +2494,6 @@ void Texture::applyTexImage2D_load(State& state, GLenum target, const Image* ima
                 (GLenum)image->getPixelFormat(),
                 (GLenum)image->getDataType(),
                 dataPtr);
-
         }
         else if (extensions->isCompressedTexImage2DSupported())
         {
