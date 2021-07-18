@@ -1315,6 +1315,20 @@ void Image::setImage(int s,int t,int r,
     _pixelFormat    = format;
     _dataType       = type;
 
+#if defined(OSG_GL3_AVAILABLE)
+    switch (format)
+    {
+        case(GL_INTENSITY): _pixelFormat = GL_RED; break;
+        case(GL_LUMINANCE): _pixelFormat = GL_RED; break;
+        case(1): _pixelFormat = GL_RED; break;
+        case(2): _pixelFormat = GL_RG; break;
+        case(GL_LUMINANCE_ALPHA): _pixelFormat = GL_RG; break;
+        case(3): _pixelFormat = GL_RGB; break;
+        case(4): _pixelFormat = GL_RGBA; break;
+        default: break;
+    }
+#endif
+
     setData(data,mode);
 
     _packing = packing;

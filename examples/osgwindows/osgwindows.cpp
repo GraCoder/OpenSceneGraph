@@ -31,6 +31,16 @@ int main( int argc, char **argv )
     // read the scene from the list of file specified commandline args.
     osg::ref_ptr<osg::Node> loadedModel = osgDB::readRefNodeFiles(arguments);
 
+    auto geo = new osg::Geometry;
+    auto vertx = new osg::Vec3Array;
+    vertx->push_back({ -10, -10, 0 });
+    vertx->push_back({  10, -10, 0 });
+    vertx->push_back({  0,  10, 0 });
+    geo->setVertexArray(vertx);
+    geo->addPrimitiveSet(new osg::DrawArrays(GL_TRIANGLES, 0, 3));
+    geo->setUseVertexArrayObject(false);
+    loadedModel = geo;
+
     // if not loaded assume no arguments passed in, try use default mode instead.
     if (!loadedModel) loadedModel = osgDB::readRefNodeFile("cow.osgt");
 
@@ -43,11 +53,14 @@ int main( int argc, char **argv )
 
     // construct the viewer.
     osgViewer::Viewer viewer;
+    viewer.setThreadingModel(viewer.SingleThreaded);
 
     int xoffset = 40;
     int yoffset = 40;
 
     // left window + left slave camera
+
+    osg::ref_ptr<osg::GraphicsContext> gc;
     {
         osg::ref_ptr<osg::GraphicsContext::Traits> traits = new osg::GraphicsContext::Traits;
 
@@ -61,7 +74,8 @@ int main( int argc, char **argv )
         traits->readDISPLAY();
         traits->setUndefinedScreenDetailsToDefaultScreen();
 
-        osg::ref_ptr<osg::GraphicsContext> gc = osg::GraphicsContext::createGraphicsContext(traits.get());
+        gc = osg::GraphicsContext::createGraphicsContext(traits.get());
+        gc->realize();
 
         osg::ref_ptr<osg::Camera> camera = new osg::Camera;
         camera->setGraphicsContext(gc.get());
@@ -71,7 +85,7 @@ int main( int argc, char **argv )
         camera->setReadBuffer(buffer);
 
         // add this slave camera to the viewer, with a shift left of the projection matrix
-        viewer.addSlave(camera.get(), osg::Matrixd::translate(1.0,0.0,0.0), osg::Matrixd());
+        viewer.addSlave(camera.get(), osg::Matrixd::translate(1,0.0,0.0), osg::Matrixd());
     }
 
     // right window + right slave camera
@@ -83,21 +97,24 @@ int main( int argc, char **argv )
         traits->height = 480;
         traits->windowDecoration = true;
         traits->doubleBuffer = true;
-        traits->sharedContext = 0;
+        traits->sharedContext = gc;
         traits->readDISPLAY();
         traits->setUndefinedScreenDetailsToDefaultScreen();
 
-        osg::ref_ptr<osg::GraphicsContext> gc = osg::GraphicsContext::createGraphicsContext(traits.get());
+        osg::ref_ptr<osg::GraphicsContext> gc1 = osg::GraphicsContext::createGraphicsContext(traits.get());
+        gc1->realize();
 
         osg::ref_ptr<osg::Camera> camera = new osg::Camera;
-        camera->setGraphicsContext(gc.get());
+        camera->setGraphicsContext(gc1.get());
         camera->setViewport(new osg::Viewport(0,0, traits->width, traits->height));
         GLenum buffer = traits->doubleBuffer ? GL_BACK : GL_FRONT;
         camera->setDrawBuffer(buffer);
         camera->setReadBuffer(buffer);
 
         // add this slave camera to the viewer, with a shift right of the projection matrix
-        viewer.addSlave(camera.get(), osg::Matrixd::translate(-1.0,0.0,0.0), osg::Matrixd());
+        viewer.addSlave(camera.get(), osg::Matrixd::translate(-1,0.0,0.0), osg::Matrixd());
+
+        gc1->getState()->setCheckForGLErrors(osg::State::ONCE_PER_ATTRIBUTE);
     }
 
 

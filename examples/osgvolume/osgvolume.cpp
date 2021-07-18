@@ -225,6 +225,7 @@ osg::Image* readRaw(int sizeX, int sizeY, int sizeZ, int numberBytesPerComponent
 
     unsigned int r_offset = (sizeZ<sizeR) ? sizeR/2 - sizeZ/2 : 0;
 
+
     int offset = endianSwap ? numberBytesPerComponent : 0;
     int delta = endianSwap ? -1 : 1;
     for(int r=0;r<sizeZ;++r)
@@ -234,7 +235,8 @@ osg::Image* readRaw(int sizeX, int sizeY, int sizeZ, int numberBytesPerComponent
             char* data = (char*) image->data(0,t,r+r_offset);
             for(int s=0;s<sizeX;++s)
             {
-                if (!fin) return 0;
+                if (!fin) 
+                    return 0;
 
                 for(int c=0;c<numberOfComponents;++c)
                 {
