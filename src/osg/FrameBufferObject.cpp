@@ -431,17 +431,16 @@ void FrameBufferAttachment::createRequiredTexturesAndApplyGenerateMipMap(State &
         if (!tobj || tobj->id() == 0)
             return;
 
-        Texture::FilterMode minFilter = _ximpl->textureTarget->getFilter(Texture::MIN_FILTER);
-        if (minFilter==Texture::LINEAR_MIPMAP_LINEAR ||
-            minFilter==Texture::LINEAR_MIPMAP_NEAREST ||
-            minFilter==Texture::NEAREST_MIPMAP_LINEAR ||
-            minFilter==Texture::NEAREST_MIPMAP_NEAREST)
-        {
-            state.setActiveTextureUnit(0);
-            state.applyTextureAttribute(0, _ximpl->textureTarget.get());
-            ext->glGenerateMipmap(_ximpl->textureTarget->getTextureTarget());
-        }
-
+        //Texture::FilterMode minFilter = _ximpl->textureTarget->getFilter(Texture::MIN_FILTER);
+        //if (minFilter==Texture::LINEAR_MIPMAP_LINEAR ||
+        //    minFilter==Texture::LINEAR_MIPMAP_NEAREST ||
+        //    minFilter==Texture::NEAREST_MIPMAP_LINEAR ||
+        //    minFilter==Texture::NEAREST_MIPMAP_NEAREST)
+        //{
+        //    state.setActiveTextureUnit(0);
+        //    state.applyTextureAttribute(0, _ximpl->textureTarget.get());
+        //    ext->glGenerateMipmap(_ximpl->textureTarget->getTextureTarget());
+        //}
     }
 }
 
