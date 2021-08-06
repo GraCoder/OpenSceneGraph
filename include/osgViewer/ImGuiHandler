@@ -1,0 +1,26 @@
+#ifndef OSGVIEWER_IMGUIHANDLER
+#define OSGVIEWER_IMGUIHANDLER 1
+
+#include <osg/DisplaySettings>
+#include <osgGA/GUIEventHandler>
+#include <osgViewer/Export>
+
+namespace osgViewer
+{
+
+class OSGVIEWER_EXPORT ImGuiHandler : public osgGA::GUIEventHandler
+{
+public:
+
+    ImGuiHandler(osg::GraphicsContext *);
+
+    ~ImGuiHandler() {}
+
+    bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa);
+
+ protected:
+};
+
+}
+
+#endif

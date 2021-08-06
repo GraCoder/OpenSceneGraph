@@ -722,16 +722,28 @@ osg::Vec2(1, 1)
     return transform;
 }
 
+#include <osgDB/ReadFile>
+#include <filesystem>
+#include <osgViewer/ViewerEventHandlers>
+#include <osgGA/StateSetManipulator>
+
 int main(int, char**)
 {
     // create the model
     osg::Group* root = new osg::Group;
-    root->addChild(createScene());
-    root->addChild(createBackground());
+
+    //root->addChild(createScene());
+    //root->addChild(createBackground());
 
     //osgDB::writeNodeFile(*root,"geometry.osgt");
 
     osgViewer::Viewer viewer;
+
+    viewer.addEventHandler(new osgGA::StateSetManipulator(viewer.getCamera()->getOrCreateStateSet()));
+    viewer.setThreadingModel(viewer.SingleThreaded);
+    //viewer.setRunFrameScheme(viewer.ON_DEMAND);
+
+    viewer.addEventHandler(new osgViewer::StatsHandler);
 
     if (0) {
         osg::ref_ptr<osg::GraphicsContext::Traits> traits = new osg::GraphicsContext::Traits;
@@ -759,13 +771,6 @@ int main(int, char**)
         //viewer.addSlave(camera.get());
         camera->setProjectionMatrix(viewer.getCamera()->getProjectionMatrix());
         viewer.setCamera(camera);
-    }
-
-    if (1) {
-        auto btn = new osgUI::PushButton;
-        root->addChild(btn);
-        btn->setExtents(osg::BoundingBoxf(-10,-10, -10, 10, 10, 10));
-        btn->setText("x");
     }
 
     // add model to viewer.

@@ -39,6 +39,7 @@ SET(TARGET_H
     ${HEADER_PATH}/Viewer
     ${HEADER_PATH}/ViewerBase
     ${HEADER_PATH}/ViewerEventHandlers
+	${HEADER_PATH}/ImGuiHandler
 )
 
 SET(LIB_COMMON_FILES
@@ -51,6 +52,7 @@ SET(LIB_COMMON_FILES
     Scene.cpp
     ScreenCaptureHandler.cpp
     StatsHandler.cpp
+	ImGuiHandler.cpp
     Version.cpp
     View.cpp
     Viewer.cpp
