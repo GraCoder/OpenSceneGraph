@@ -19,6 +19,7 @@
 
 #include <osgViewer/Viewer>
 #include <osgViewer/ViewerEventHandlers>
+#include <osgViewer/ImGuiHandler>
 
 #include <osgGA/TrackballManipulator>
 #include <osgGA/FlightManipulator>
@@ -149,6 +150,11 @@ int main(int argc, char** argv)
 
     // add the screen capture handler
     viewer.addEventHandler(new osgViewer::ScreenCaptureHandler);
+
+	viewer.realize();
+	std::vector<osg::GraphicsContext*> ctxs;
+	viewer.getContexts(ctxs);
+	viewer.addEventHandler(new osgViewer::ImGuiHandler(ctxs[0]));
 
     osg::ElapsedTime elapsedTime;
 
