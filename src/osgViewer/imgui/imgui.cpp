@@ -2908,7 +2908,7 @@ void ImGui::RenderNavHighlight(const ImRect& bb, ImGuiID id, ImGuiNavHighlightFl
 //-----------------------------------------------------------------------------
 
 // ImGuiWindow is mostly a dumb struct. It merely has a constructor and a few helper methods
-ImGuiWindow::ImGuiWindow(ImGuiContext* context, const char* name) : DrawListInst(NULL)
+ImGuiWindow::ImGuiWindow(ImGuiContext* context, const char* name) : DrawListInst{NULL, NULL}
 {
     memset(this, 0, sizeof(*this));
     Name = ImStrdup(name);
@@ -2926,14 +2926,15 @@ ImGuiWindow::ImGuiWindow(ImGuiContext* context, const char* name) : DrawListInst
     LastTimeActive = -1.0f;
     FontWindowScale = 1.0f;
     SettingsOffset = -1;
-    DrawList = &DrawListInst;
+    DrawList = DrawListInst;
     DrawList->_Data = &context->DrawListSharedData;
+    DrawListInst[1]._Data = DrawList->_Data;
     DrawList->_OwnerName = Name;
 }
 
 ImGuiWindow::~ImGuiWindow()
 {
-    IM_ASSERT(DrawList == &DrawListInst);
+    IM_ASSERT(DrawList == DrawListInst || DrawList == &DrawListInst[1]);
     IM_DELETE(Name);
     ColumnsStorage.clear_destruct();
 }
@@ -4109,90 +4110,90 @@ void ImGui::NewFrame()
     // [DEBUG] Item picker tool - start with DebugStartItemPicker() - useful to visually select an item and break into its call-stack.
     UpdateDebugToolItemPicker();
 
-    // Create implicit/fallback window - which we will only render it if the user has added something to it.
-    // We don't use "Debug" to avoid colliding with user trying to create a "Debug" window with custom flags.
-    // This fallback is particularly important as it avoid ImGui:: calls from crashing.
-    g.WithinFrameScopeWithImplicitWindow = true;
-    SetNextWindowSize(ImVec2(400, 400), ImGuiCond_FirstUseEver);
-    Begin("Debug##Default");
-    IM_ASSERT(g.CurrentWindow->IsFallbackWindow == true);
+	// Create implicit/fallback window - which we will only render it if the user has added something to it.
+	// We don't use "Debug" to avoid colliding with user trying to create a "Debug" window with custom flags.
+	// This fallback is particularly important as it avoid ImGui:: calls from crashing.
+	g.WithinFrameScopeWithImplicitWindow = true;
+	SetNextWindowSize(ImVec2(400, 400), ImGuiCond_FirstUseEver);
+	Begin("Debug##Default");
+	IM_ASSERT(g.CurrentWindow->IsFallbackWindow == true);
 
-    CallContextHooks(&g, ImGuiContextHookType_NewFramePost);
+	CallContextHooks(&g, ImGuiContextHookType_NewFramePost);
 }
 
 // [DEBUG] Item picker tool - start with DebugStartItemPicker() - useful to visually select an item and break into its call-stack.
 void ImGui::UpdateDebugToolItemPicker()
 {
-    ImGuiContext& g = *GImGui;
-    g.DebugItemPickerBreakId = 0;
-    if (g.DebugItemPickerActive)
-    {
-        const ImGuiID hovered_id = g.HoveredIdPreviousFrame;
-        SetMouseCursor(ImGuiMouseCursor_Hand);
-        if (IsKeyPressedMap(ImGuiKey_Escape))
-            g.DebugItemPickerActive = false;
-        if (IsMouseClicked(0) && hovered_id)
-        {
-            g.DebugItemPickerBreakId = hovered_id;
-            g.DebugItemPickerActive = false;
-        }
-        SetNextWindowBgAlpha(0.60f);
-        BeginTooltip();
-        Text("HoveredId: 0x%08X", hovered_id);
-        Text("Press ESC to abort picking.");
-        TextColored(GetStyleColorVec4(hovered_id ? ImGuiCol_Text : ImGuiCol_TextDisabled), "Click to break in debugger!");
-        EndTooltip();
-    }
+	ImGuiContext& g = *GImGui;
+	g.DebugItemPickerBreakId = 0;
+	if (g.DebugItemPickerActive)
+	{
+		const ImGuiID hovered_id = g.HoveredIdPreviousFrame;
+		SetMouseCursor(ImGuiMouseCursor_Hand);
+		if (IsKeyPressedMap(ImGuiKey_Escape))
+			g.DebugItemPickerActive = false;
+		if (IsMouseClicked(0) && hovered_id)
+		{
+			g.DebugItemPickerBreakId = hovered_id;
+			g.DebugItemPickerActive = false;
+		}
+		SetNextWindowBgAlpha(0.60f);
+		BeginTooltip();
+		Text("HoveredId: 0x%08X", hovered_id);
+		Text("Press ESC to abort picking.");
+		TextColored(GetStyleColorVec4(hovered_id ? ImGuiCol_Text : ImGuiCol_TextDisabled), "Click to break in debugger!");
+		EndTooltip();
+	}
 }
 
 void ImGui::Initialize(ImGuiContext* context)
 {
-    ImGuiContext& g = *context;
-    IM_ASSERT(!g.Initialized && !g.SettingsLoaded);
+	ImGuiContext& g = *context;
+	IM_ASSERT(!g.Initialized && !g.SettingsLoaded);
 
-    // Add .ini handle for ImGuiWindow type
-    {
-        ImGuiSettingsHandler ini_handler;
-        ini_handler.TypeName = "Window";
-        ini_handler.TypeHash = ImHashStr("Window");
-        ini_handler.ClearAllFn = WindowSettingsHandler_ClearAll;
-        ini_handler.ReadOpenFn = WindowSettingsHandler_ReadOpen;
-        ini_handler.ReadLineFn = WindowSettingsHandler_ReadLine;
-        ini_handler.ApplyAllFn = WindowSettingsHandler_ApplyAll;
-        ini_handler.WriteAllFn = WindowSettingsHandler_WriteAll;
-        g.SettingsHandlers.push_back(ini_handler);
-    }
+	// Add .ini handle for ImGuiWindow type
+	{
+		ImGuiSettingsHandler ini_handler;
+		ini_handler.TypeName = "Window";
+		ini_handler.TypeHash = ImHashStr("Window");
+		ini_handler.ClearAllFn = WindowSettingsHandler_ClearAll;
+		ini_handler.ReadOpenFn = WindowSettingsHandler_ReadOpen;
+		ini_handler.ReadLineFn = WindowSettingsHandler_ReadLine;
+		ini_handler.ApplyAllFn = WindowSettingsHandler_ApplyAll;
+		ini_handler.WriteAllFn = WindowSettingsHandler_WriteAll;
+		g.SettingsHandlers.push_back(ini_handler);
+	}
 
-    // Add .ini handle for ImGuiTable type
-    TableSettingsInstallHandler(context);
+	// Add .ini handle for ImGuiTable type
+	TableSettingsInstallHandler(context);
 
-    // Create default viewport
-    ImGuiViewportP* viewport = IM_NEW(ImGuiViewportP)();
-    g.Viewports.push_back(viewport);
+	// Create default viewport
+	ImGuiViewportP* viewport = IM_NEW(ImGuiViewportP)();
+	g.Viewports.push_back(viewport);
 
 #ifdef IMGUI_HAS_DOCK
 #endif
 
-    g.Initialized = true;
+	g.Initialized = true;
 }
 
 // This function is merely here to free heap allocations.
 void ImGui::Shutdown(ImGuiContext* context)
 {
-    // The fonts atlas can be used prior to calling NewFrame(), so we clear it even if g.Initialized is FALSE (which would happen if we never called NewFrame)
-    ImGuiContext& g = *context;
-    if (g.IO.Fonts && g.FontAtlasOwnedByContext)
-    {
-        g.IO.Fonts->Locked = false;
-        IM_DELETE(g.IO.Fonts);
-    }
-    g.IO.Fonts = NULL;
+	// The fonts atlas can be used prior to calling NewFrame(), so we clear it even if g.Initialized is FALSE (which would happen if we never called NewFrame)
+	ImGuiContext& g = *context;
+	if (g.IO.Fonts && g.FontAtlasOwnedByContext)
+	{
+		g.IO.Fonts->Locked = false;
+		IM_DELETE(g.IO.Fonts);
+	}
+	g.IO.Fonts = NULL;
 
-    // Cleanup of other data are conditional on actually having initialized Dear ImGui.
-    if (!g.Initialized)
-        return;
+	// Cleanup of other data are conditional on actually having initialized Dear ImGui.
+	if (!g.Initialized)
+		return;
 
-    // Save settings (unless we haven't attempted to load them: CreateContext/DestroyContext without a call to NewFrame shouldn't save an empty file)
+	// Save settings (unless we haven't attempted to load them: CreateContext/DestroyContext without a call to NewFrame shouldn't save an empty file)
     if (g.SettingsLoaded && g.IO.IniFilename != NULL)
     {
         ImGuiContext* backup_context = GImGui;
@@ -5768,6 +5769,9 @@ bool ImGui::Begin(const char* name, bool* p_open, ImGuiWindowFlags flags)
     const bool first_begin_of_the_frame = (window->LastFrameActive != current_frame);
     window->IsFallbackWindow = (g.CurrentWindowStack.Size == 0 && g.WithinFrameScopeWithImplicitWindow);
 
+    const int current_index = current_frame % 2;
+    window->DrawList = &window->DrawListInst[current_index];
+
     // Update the Appearing flag
     bool window_just_activated_by_user = (window->LastFrameActive < current_frame - 1);   // Not using !WasActive because the implicit "Debug" window would always toggle off->on
     if (flags & ImGuiWindowFlags_Popup)
@@ -6212,7 +6216,7 @@ bool ImGui::Begin(const char* name, bool* p_open, ImGuiWindowFlags flags)
             RenderWindowDecorations(window, title_bar_rect, title_bar_is_highlight, resize_grip_count, resize_grip_col, resize_grip_draw_size);
 
             if (render_decorations_in_parent)
-                window->DrawList = &window->DrawListInst;
+                window->DrawList = &window->DrawListInst[current_index];
         }
 
         // Draw navigation selection/windowing rectangle border

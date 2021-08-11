@@ -35,6 +35,8 @@
 #include <iostream>
 
 
+#include <osgViewer/imgui/imgui.h>
+
 int main(int argc, char** argv)
 {
     // use an ArgumentParser object to manage the program arguments.
@@ -151,10 +153,8 @@ int main(int argc, char** argv)
     // add the screen capture handler
     viewer.addEventHandler(new osgViewer::ScreenCaptureHandler);
 
-	viewer.realize();
-	std::vector<osg::GraphicsContext*> ctxs;
-	viewer.getContexts(ctxs);
-	viewer.addEventHandler(new osgViewer::ImGuiHandler(ctxs[0]));
+	viewer.addEventHandler(new osgViewer::ImGuiHandler);
+    //viewer.setThreadingModel(viewer.SingleThreaded);
 
     osg::ElapsedTime elapsedTime;
 
@@ -185,6 +185,31 @@ int main(int argc, char** argv)
         return 1;
     }
 
+    osg::Group* grp = new osg::Group;
+    grp->addChild(loadedModel);
+    auto geo = new osg::Geometry;
+    grp->addChild(geo);
+    loadedModel = grp;
+
+    class xxUpdate : public osg::NodeCallback {
+    public:
+
+        void operator()(osg::Node* node, osg::NodeVisitor* nv)
+        {
+            auto fm = nv->getFrameStamp()->getFrameNumber();
+            if (fm < 10)
+                return;
+			ImGui::Begin("hello world");
+			ImGui::Text("This is some useful text.");
+			ImGui::Button("Button");
+			ImGui::SameLine();
+			ImGui::Text("counter = ");
+			ImGui::Text("Application average 3f ms/frame (1f FPS)");
+			ImGui::End();
+        }
+    };
+
+    geo->addUpdateCallback(new xxUpdate);
 
     // optimize the scene graph, remove redundant nodes and state etc.
     osgUtil::Optimizer optimizer;

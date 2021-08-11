@@ -12,6 +12,8 @@
 #include <osgViewer/Renderer>
 
 #include <osgViewer/imgui/imgui.h>
+#include "imgui/imgui_internal.h"
+#include "imgui_impl_opengl3.cpp"
 
 namespace osgViewer {
 
@@ -55,7 +57,88 @@ static int ConvertFromOSGKey(int key)
 	}
 }
 
-ImGuiHandler::ImGuiHandler(osg::GraphicsContext* context)
+std::map<osg::GraphicsContext*, ImGuiContext*> s_context;
+
+ImGuiViewportP* s_viewports[2];
+
+class ImGuiRenderObject : public osg::Drawable {
+public:
+	ImGuiRenderObject()
+		: _initialized(false)
+	{
+		setCullingActive(false);
+	}
+
+	void drawImplementation(osg::RenderInfo& renderInfo) const
+	{
+		auto ext = renderInfo.getState()->get<osg::GLExtensions>();
+		auto extWrap = static_cast<GLWrapper*>(ext);
+		auto ctx = renderInfo.getState()->getGraphicsContext();
+		auto& imctx = s_context[ctx];
+
+		if (!_initialized)
+		{
+			auto ctxTmp = ImGui::CreateContext();
+			extWrap->ImGui_ImplOpenGL3_Init("#version 460");
+			extWrap->ImGui_ImplOpenGL3_NewFrame();
+			initImGui();
+			auto* viewport = IM_NEW(ImGuiViewportP)();
+			s_viewports[0] = ctxTmp->Viewports[0];
+			s_viewports[1] = viewport;
+			imctx = ctxTmp;
+			_initialized = true;
+			return;
+		} 
+
+		auto frameNum = renderInfo.getState()->getFrameStamp()->getFrameNumber();
+		frameNum = frameNum % 2;
+		auto data = &s_viewports[frameNum]->DrawDataP;
+		extWrap->ImGui_ImplOpenGL3_RenderDrawData(data);
+		data->Clear();
+	}
+
+	void initImGui() const
+	{
+		ImGuiIO& io = ImGui::GetIO();
+		io.KeyMap[ImGuiKey_Tab] = ImGuiKey_Tab;
+		io.KeyMap[ImGuiKey_LeftArrow] = ImGuiKey_LeftArrow;
+		io.KeyMap[ImGuiKey_RightArrow] = ImGuiKey_RightArrow;
+		io.KeyMap[ImGuiKey_UpArrow] = ImGuiKey_UpArrow;
+		io.KeyMap[ImGuiKey_DownArrow] = ImGuiKey_DownArrow;
+		io.KeyMap[ImGuiKey_PageUp] = ImGuiKey_PageUp;
+		io.KeyMap[ImGuiKey_PageDown] = ImGuiKey_PageDown;
+		io.KeyMap[ImGuiKey_Home] = ImGuiKey_Home;
+		io.KeyMap[ImGuiKey_End] = ImGuiKey_End;
+		io.KeyMap[ImGuiKey_Delete] = ImGuiKey_Delete;
+		io.KeyMap[ImGuiKey_Backspace] = ImGuiKey_Backspace;
+		io.KeyMap[ImGuiKey_Enter] = ImGuiKey_Enter;
+		io.KeyMap[ImGuiKey_Escape] = ImGuiKey_Escape;
+		io.KeyMap[ImGuiKey_A] = osgGA::GUIEventAdapter::KeySymbol::KEY_A;
+		io.KeyMap[ImGuiKey_C] = osgGA::GUIEventAdapter::KeySymbol::KEY_C;
+		io.KeyMap[ImGuiKey_V] = osgGA::GUIEventAdapter::KeySymbol::KEY_V;
+		io.KeyMap[ImGuiKey_X] = osgGA::GUIEventAdapter::KeySymbol::KEY_X;
+		io.KeyMap[ImGuiKey_Y] = osgGA::GUIEventAdapter::KeySymbol::KEY_Y;
+		io.KeyMap[ImGuiKey_Z] = osgGA::GUIEventAdapter::KeySymbol::KEY_Z;
+
+		//ImFont* font = io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\consola.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesChineseSimplifiedCommon());
+		//io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+		ImGui::StyleColorsDark();
+	}
+
+private:
+	mutable bool _initialized;
+};
+
+class ImGuiUpdateOperation : public osg::Operation {
+	void operator () (osg::Object*)
+	{
+		ImGui::EndFrame();
+		ImGui::Render();
+	}
+};
+
+ImGuiHandler::ImGuiHandler()
+	: _initialized(false)
 {
 	OSG_INFO << "ImGuiHandler::ImGuiHandler()" << std::endl;
 
@@ -65,16 +148,16 @@ ImGuiHandler::ImGuiHandler(osg::GraphicsContext* context)
 	_camera->setProjectionResizePolicy(osg::Camera::FIXED);
 
 	osg::DisplaySettings::ShaderHint shaderHint = osg::DisplaySettings::instance()->getShaderHint();
-	_camera->setGraphicsContext(context);
 	_camera->setRenderOrder(osg::Camera::POST_RENDER, 999);
 	_camera->setReferenceFrame(osg::Transform::ABSOLUTE_RF);
 	_camera->setViewMatrix(osg::Matrix::identity());
 
+	_camera->setViewport(0, 0, 800, 640);
+
 	// only clear the depth buffer
 	_camera->setClearMask(0);
 	_camera->setAllowEventFocus(false);
-
-	init();
+	_camera->addChild(new ImGuiRenderObject);
 }
 
 bool ImGuiHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
@@ -85,7 +168,31 @@ bool ImGuiHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdap
 
 	osgViewer::ViewerBase* viewer = myview->getViewerBase();
 
-	//if (ea.getHandled()) return false;
+	std::vector<osg::GraphicsContext*> ctxs;
+	viewer->getContexts(ctxs);
+	if (ctxs.size() == 0)
+		return false;
+	int idx = 0;
+	while (idx < ctxs.size())
+	{
+		if (ctxs[idx] == ea.getGraphicsContext())
+			break;
+		idx++;
+	}
+	
+	osg::GraphicsContext* ctx = nullptr;
+	if (idx == ctxs.size())
+		ctx = ctxs[0];
+	else
+		ctx = ctxs[idx];
+
+	_camera->setGraphicsContext(ctx);
+
+	auto imctx = s_context[ctx];
+	if (imctx == nullptr)
+		return false;
+	 else
+		ImGui::SetCurrentContext(imctx);
 
 	ImGuiIO& io = ImGui::GetIO();
 	const bool wantCaptureMouse = io.WantCaptureMouse;
@@ -157,72 +264,24 @@ bool ImGuiHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdap
 			_mouseWheel = ea.getScrollingMotion() == osgGA::GUIEventAdapter::SCROLL_UP ? 1.0 : -1.0;
 			return wantCaptureMouse;
 		}
-		case(osgGA::GUIEventAdapter::RESIZE):
-			setWindowSize(ea.getWindowWidth(), ea.getWindowHeight());
-			break;
 		case(osgGA::GUIEventAdapter::FRAME):
-			printf("");
+		{
+			auto frameNum = viewer->getViewerFrameStamp()->getFrameNumber();
+			frameNum = frameNum % 2;
+			imctx->Viewports[0] = s_viewports[frameNum];
+			newFrame();
+			viewer->addUpdateOperation(new ImGuiUpdateOperation);
 			break;
+		}
 		default: break;
 	}
 	return false;
 }
 
-void ImGuiHandler::setWindowSize(int width, int height)
-{
-	if (width <= 0 || height <= 0)
-		return;
-
-	_width = width;
-	_height = height;
-
-	//_camera->setViewport(0, 0, width, height);
-	//if (fabs(height * _statsWidth) <= fabs(width * _statsHeight)) {
-	//	_camera->setProjectionMatrix(osg::Matrix::ortho2D(0.0, width * _statsHeight / height, 0.0, _statsHeight));
-	//} else {
-	//	_camera->setProjectionMatrix(osg::Matrix::ortho2D(0.0, _statsWidth, _statsHeight - height * _statsWidth / width, _statsHeight));
-	//}
-}
-
-void ImGuiHandler::init()
-{
-	ImGui::CreateContext();
-	ImGuiIO& io = ImGui::GetIO();
-
-	// Keyboard mapping. ImGui will use those indices to peek into the io.KeyDown[] array.
-	io.KeyMap[ImGuiKey_Tab] = ImGuiKey_Tab;
-	io.KeyMap[ImGuiKey_LeftArrow] = ImGuiKey_LeftArrow;
-	io.KeyMap[ImGuiKey_RightArrow] = ImGuiKey_RightArrow;
-	io.KeyMap[ImGuiKey_UpArrow] = ImGuiKey_UpArrow;
-	io.KeyMap[ImGuiKey_DownArrow] = ImGuiKey_DownArrow;
-	io.KeyMap[ImGuiKey_PageUp] = ImGuiKey_PageUp;
-	io.KeyMap[ImGuiKey_PageDown] = ImGuiKey_PageDown;
-	io.KeyMap[ImGuiKey_Home] = ImGuiKey_Home;
-	io.KeyMap[ImGuiKey_End] = ImGuiKey_End;
-	io.KeyMap[ImGuiKey_Delete] = ImGuiKey_Delete;
-	io.KeyMap[ImGuiKey_Backspace] = ImGuiKey_Backspace;
-	io.KeyMap[ImGuiKey_Enter] = ImGuiKey_Enter;
-	io.KeyMap[ImGuiKey_Escape] = ImGuiKey_Escape;
-	io.KeyMap[ImGuiKey_A] = osgGA::GUIEventAdapter::KeySymbol::KEY_A;
-	io.KeyMap[ImGuiKey_C] = osgGA::GUIEventAdapter::KeySymbol::KEY_C;
-	io.KeyMap[ImGuiKey_V] = osgGA::GUIEventAdapter::KeySymbol::KEY_V;
-	io.KeyMap[ImGuiKey_X] = osgGA::GUIEventAdapter::KeySymbol::KEY_X;
-	io.KeyMap[ImGuiKey_Y] = osgGA::GUIEventAdapter::KeySymbol::KEY_Y;
-	io.KeyMap[ImGuiKey_Z] = osgGA::GUIEventAdapter::KeySymbol::KEY_Z;
-
-
-	//ImGui_ImplOpenGL3_Init();
-
-	//io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-}
-
 void ImGuiHandler::newFrame()
 {
-	//ImGui_ImplOpenGL3_NewFrame();
-
 	ImGuiIO& io = ImGui::GetIO();
-
-	io.DisplaySize = ImVec2(_width, _height);
+	io.DisplaySize = ImVec2(1800, 900);
 	//if (w > 0 && h > 0)
 	//	io.DisplayFramebufferScale = ImVec2((float)display_w / w, (float)display_h / h);
 
@@ -240,7 +299,7 @@ void ImGuiHandler::newFrame()
 
 	io.MouseWheel = _mouseWheel;
 	_mouseWheel = 0.0f;
-
+	
 	ImGui::NewFrame();
 }
 
