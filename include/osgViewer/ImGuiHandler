@@ -31,6 +31,8 @@ private:
 	int		_mouseWheel;
 
 	int		_width, _height;
+
+	osg::ref_ptr<osg::Operation> _renderOperation;
 };
 
 }

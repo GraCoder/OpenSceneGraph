@@ -23,6 +23,9 @@
 
 #include <iostream>
 
+#include <osgViewer/ImGuiHandler>
+#include <osgViewer/imgui/imgui.h>
+
 int main( int argc, char **argv )
 {
     // use an ArgumentParser object to manage the program arguments.
@@ -53,7 +56,32 @@ int main( int argc, char **argv )
 
     // construct the viewer.
     osgViewer::Viewer viewer;
-    viewer.setThreadingModel(viewer.SingleThreaded);
+    viewer.addEventHandler(new osgViewer::ImGuiHandler);
+
+    class xxUpdate : public osg::NodeCallback {
+    public:
+
+        void operator()(osg::Node* node, osg::NodeVisitor* nv)
+        {
+            auto fm = nv->getFrameStamp()->getFrameNumber();
+            if (fm < 10)
+                return;
+            ImGui::Begin("hello world");
+            ImGui::Text("This is some useful text.");
+            ImGui::Button("Button");
+            ImGui::SameLine();
+            ImGui::Text("counter = ");
+            ImGui::Text("Application average 3f ms/frame (1f FPS)");
+            ImGui::End();
+        }
+    };
+
+    auto xxNode = new osg::Geometry;
+    auto grp = new osg::Group;
+    grp->addChild(loadedModel);
+    grp->addChild(xxNode);
+    xxNode->setUpdateCallback(new xxUpdate);
+    loadedModel = grp;
 
     int xoffset = 40;
     int yoffset = 40;

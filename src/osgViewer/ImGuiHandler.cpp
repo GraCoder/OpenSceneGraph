@@ -2,12 +2,9 @@
 #include <iomanip>
 #include <stdio.h>
 
-#include <osg/io_utils>
-#include <osg/MatrixTransform>
-#include <osg/PolygonMode>
 #include <osg/Geometry>
 
-#include <osgViewer/View>
+#include <osgViewer/Viewer>
 #include <osgViewer/ImGuiHandler>
 #include <osgViewer/Renderer>
 
@@ -57,9 +54,8 @@ static int ConvertFromOSGKey(int key)
 	}
 }
 
-std::map<osg::GraphicsContext*, ImGuiContext*> s_context;
-
-ImGuiViewportP* s_viewports[2];
+static ImGuiContext* s_context;
+static ImGuiViewportP* s_viewports[2];
 
 class ImGuiRenderObject : public osg::Drawable {
 public:
@@ -69,14 +65,18 @@ public:
 		setCullingActive(false);
 	}
 
+	~ImGuiRenderObject()
+	{
+		//ImGui_ImplOpenGL3_Shutdown();
+		ImGui::DestroyContext();
+	}
+
 	void drawImplementation(osg::RenderInfo& renderInfo) const
 	{
 		auto ext = renderInfo.getState()->get<osg::GLExtensions>();
 		auto extWrap = static_cast<GLWrapper*>(ext);
-		auto ctx = renderInfo.getState()->getGraphicsContext();
-		auto& imctx = s_context[ctx];
 
-		if (!_initialized)
+		if (s_context == nullptr)
 		{
 			auto ctxTmp = ImGui::CreateContext();
 			extWrap->ImGui_ImplOpenGL3_Init("#version 460");
@@ -85,7 +85,7 @@ public:
 			auto* viewport = IM_NEW(ImGuiViewportP)();
 			s_viewports[0] = ctxTmp->Viewports[0];
 			s_viewports[1] = viewport;
-			imctx = ctxTmp;
+			s_context = ctxTmp;
 			_initialized = true;
 			return;
 		} 
@@ -94,7 +94,6 @@ public:
 		frameNum = frameNum % 2;
 		auto data = &s_viewports[frameNum]->DrawDataP;
 		extWrap->ImGui_ImplOpenGL3_RenderDrawData(data);
-		data->Clear();
 	}
 
 	void initImGui() const
@@ -130,6 +129,9 @@ private:
 };
 
 class ImGuiUpdateOperation : public osg::Operation {
+public:
+	ImGuiUpdateOperation() { }
+	~ImGuiUpdateOperation() { }
 	void operator () (osg::Object*)
 	{
 		ImGui::EndFrame();
@@ -158,45 +160,30 @@ ImGuiHandler::ImGuiHandler()
 	_camera->setClearMask(0);
 	_camera->setAllowEventFocus(false);
 	_camera->addChild(new ImGuiRenderObject);
+
+	_renderOperation = new ImGuiUpdateOperation;
 }
 
 bool ImGuiHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
 {
-	osgViewer::View* myview = dynamic_cast<osgViewer::View*>(&aa);
-	if (!myview) 
-		return false;
-
-	osgViewer::ViewerBase* viewer = myview->getViewerBase();
-
-	std::vector<osg::GraphicsContext*> ctxs;
-	viewer->getContexts(ctxs);
-	if (ctxs.size() == 0)
-		return false;
-	int idx = 0;
-	while (idx < ctxs.size())
+	osgViewer::Viewer* viewer = dynamic_cast<osgViewer::Viewer*>(&aa);
+	if (_camera->getGraphicsContext() == nullptr)
 	{
-		if (ctxs[idx] == ea.getGraphicsContext())
-			break;
-		idx++;
+		std::vector<osg::GraphicsContext*> ctxs;
+		viewer->getContexts(ctxs, false);
+		if (ctxs.empty())
+			return false;
+		_camera->setGraphicsContext(ctxs[0]);
 	}
-	
-	osg::GraphicsContext* ctx = nullptr;
-	if (idx == ctxs.size())
-		ctx = ctxs[0];
-	else
-		ctx = ctxs[idx];
 
-	_camera->setGraphicsContext(ctx);
-
-	auto imctx = s_context[ctx];
-	if (imctx == nullptr)
+	if (s_context == nullptr)
 		return false;
-	 else
-		ImGui::SetCurrentContext(imctx);
 
 	ImGuiIO& io = ImGui::GetIO();
 	const bool wantCaptureMouse = io.WantCaptureMouse;
 	const bool wantCaptureKeyboard = io.WantCaptureKeyboard;
+	auto traits = _camera->getGraphicsContext()->getTraits();
+	io.DisplaySize = ImVec2(traits->width, traits->height);
 
 	switch (ea.getEventType()) {
 		case osgGA::GUIEventAdapter::KEYDOWN:
@@ -266,12 +253,17 @@ bool ImGuiHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdap
 		}
 		case(osgGA::GUIEventAdapter::FRAME):
 		{
-			auto frameNum = viewer->getViewerFrameStamp()->getFrameNumber();
+			auto frameNum =
+				viewer->getViewerFrameStamp()->getFrameNumber();
 			frameNum = frameNum % 2;
-			imctx->Viewports[0] = s_viewports[frameNum];
+			s_context->Viewports[0] = s_viewports[frameNum];
 			newFrame();
-			viewer->addUpdateOperation(new ImGuiUpdateOperation);
+			viewer->addUpdateOperation(_renderOperation);
 			break;
+		}
+		case(osgGA::GUIEventAdapter::CLOSE_WINDOW):
+		{
+			printf("");
 		}
 		default: break;
 	}
@@ -281,7 +273,6 @@ bool ImGuiHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdap
 void ImGuiHandler::newFrame()
 {
 	ImGuiIO& io = ImGui::GetIO();
-	io.DisplaySize = ImVec2(1800, 900);
 	//if (w > 0 && h > 0)
 	//	io.DisplayFramebufferScale = ImVec2((float)display_w / w, (float)display_h / h);
 
