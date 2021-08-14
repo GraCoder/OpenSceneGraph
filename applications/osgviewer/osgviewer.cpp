@@ -217,7 +217,7 @@ int main(int argc, char** argv)
 
     viewer.setSceneData(loadedModel);
 
-    viewer.realize();
+    //viewer.realize();
 
     return viewer.run();
 

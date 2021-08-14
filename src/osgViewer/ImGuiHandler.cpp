@@ -54,21 +54,16 @@ static int ConvertFromOSGKey(int key)
 	}
 }
 
-static ImGuiContext* s_context;
-static ImGuiViewportP* s_viewports[2];
-
 class ImGuiRenderObject : public osg::Drawable {
 public:
-	ImGuiRenderObject()
-		: _initialized(false)
+	ImGuiRenderObject(ImGuiHandler *handler)
+		: _handler(handler)
 	{
 		setCullingActive(false);
 	}
 
 	~ImGuiRenderObject()
 	{
-		//ImGui_ImplOpenGL3_Shutdown();
-		ImGui::DestroyContext();
 	}
 
 	void drawImplementation(osg::RenderInfo& renderInfo) const
@@ -76,56 +71,14 @@ public:
 		auto ext = renderInfo.getState()->get<osg::GLExtensions>();
 		auto extWrap = static_cast<GLWrapper*>(ext);
 
-		if (s_context == nullptr)
-		{
-			auto ctxTmp = ImGui::CreateContext();
-			extWrap->ImGui_ImplOpenGL3_Init("#version 460");
-			extWrap->ImGui_ImplOpenGL3_NewFrame();
-			initImGui();
-			auto* viewport = IM_NEW(ImGuiViewportP)();
-			s_viewports[0] = ctxTmp->Viewports[0];
-			s_viewports[1] = viewport;
-			s_context = ctxTmp;
-			_initialized = true;
-			return;
-		} 
-
 		auto frameNum = renderInfo.getState()->getFrameStamp()->getFrameNumber();
 		frameNum = frameNum % 2;
-		auto data = &s_viewports[frameNum]->DrawDataP;
+		auto data = &_handler->_imvp[frameNum]->DrawDataP;
 		extWrap->ImGui_ImplOpenGL3_RenderDrawData(data);
 	}
 
-	void initImGui() const
-	{
-		ImGuiIO& io = ImGui::GetIO();
-		io.KeyMap[ImGuiKey_Tab] = ImGuiKey_Tab;
-		io.KeyMap[ImGuiKey_LeftArrow] = ImGuiKey_LeftArrow;
-		io.KeyMap[ImGuiKey_RightArrow] = ImGuiKey_RightArrow;
-		io.KeyMap[ImGuiKey_UpArrow] = ImGuiKey_UpArrow;
-		io.KeyMap[ImGuiKey_DownArrow] = ImGuiKey_DownArrow;
-		io.KeyMap[ImGuiKey_PageUp] = ImGuiKey_PageUp;
-		io.KeyMap[ImGuiKey_PageDown] = ImGuiKey_PageDown;
-		io.KeyMap[ImGuiKey_Home] = ImGuiKey_Home;
-		io.KeyMap[ImGuiKey_End] = ImGuiKey_End;
-		io.KeyMap[ImGuiKey_Delete] = ImGuiKey_Delete;
-		io.KeyMap[ImGuiKey_Backspace] = ImGuiKey_Backspace;
-		io.KeyMap[ImGuiKey_Enter] = ImGuiKey_Enter;
-		io.KeyMap[ImGuiKey_Escape] = ImGuiKey_Escape;
-		io.KeyMap[ImGuiKey_A] = osgGA::GUIEventAdapter::KeySymbol::KEY_A;
-		io.KeyMap[ImGuiKey_C] = osgGA::GUIEventAdapter::KeySymbol::KEY_C;
-		io.KeyMap[ImGuiKey_V] = osgGA::GUIEventAdapter::KeySymbol::KEY_V;
-		io.KeyMap[ImGuiKey_X] = osgGA::GUIEventAdapter::KeySymbol::KEY_X;
-		io.KeyMap[ImGuiKey_Y] = osgGA::GUIEventAdapter::KeySymbol::KEY_Y;
-		io.KeyMap[ImGuiKey_Z] = osgGA::GUIEventAdapter::KeySymbol::KEY_Z;
-
-		//ImFont* font = io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\consola.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesChineseSimplifiedCommon());
-		//io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-		ImGui::StyleColorsDark();
-	}
-
 private:
-	mutable bool _initialized;
+	ImGuiHandler* _handler;
 };
 
 class ImGuiUpdateOperation : public osg::Operation {
@@ -159,9 +112,17 @@ ImGuiHandler::ImGuiHandler()
 	// only clear the depth buffer
 	_camera->setClearMask(0);
 	_camera->setAllowEventFocus(false);
-	_camera->addChild(new ImGuiRenderObject);
+	_camera->addChild(new ImGuiRenderObject(this));
 
 	_renderOperation = new ImGuiUpdateOperation;
+
+	_imvp[1] = IM_NEW(ImGuiViewportP)();
+}
+
+ImGuiHandler::~ImGuiHandler()
+{
+	if(_imvp[0]) ImGui::GetCurrentContext()->Viewports[0] = _imvp[0];
+	_imvp[0] = nullptr; IM_DELETE(_imvp[1]); _imvp[1] = nullptr;
 }
 
 bool ImGuiHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
@@ -175,9 +136,8 @@ bool ImGuiHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdap
 			return false;
 		_camera->setGraphicsContext(ctxs[0]);
 	}
-
-	if (s_context == nullptr)
-		return false;
+	auto imctx = ImGui::GetCurrentContext();
+	if (imctx == nullptr) return false;
 
 	ImGuiIO& io = ImGui::GetIO();
 	const bool wantCaptureMouse = io.WantCaptureMouse;
@@ -253,10 +213,11 @@ bool ImGuiHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdap
 		}
 		case(osgGA::GUIEventAdapter::FRAME):
 		{
-			auto frameNum =
-				viewer->getViewerFrameStamp()->getFrameNumber();
+			if(_imvp[0] == nullptr)
+				_imvp[0] = ImGui::GetCurrentContext()->Viewports[0];
+			auto frameNum = viewer->getViewerFrameStamp()->getFrameNumber();
 			frameNum = frameNum % 2;
-			s_context->Viewports[0] = s_viewports[frameNum];
+			ImGui::GetCurrentContext()->Viewports[0] = _imvp[frameNum];
 			newFrame();
 			viewer->addUpdateOperation(_renderOperation);
 			break;

@@ -19,6 +19,7 @@
 #include <osgViewer/api/Win32/GraphicsWindowWin32>
 #include <osgViewer/api/Win32/PixelBufferWin32>
 #include <osgViewer/View>
+#include <osgViewer/imgui/imgui.h>
 
 #include <osg/GL>
 #include <osg/DeleteHandler>
@@ -30,6 +31,8 @@
 
 #include <osgViewer/api/Win32/Win32GWUtils>
 #include <windowsx.h>
+
+#include "imgui_impl_opengl3.cpp"
 
 #define MOUSEEVENTF_FROMTOUCH           0xFF515700
 
@@ -1929,38 +1932,79 @@ bool GraphicsWindowWin32::realizeImplementation()
         if (!_initialized) return false;
     }
 
+#ifdef OSG_USE_EGL
+#else
+	// make context current so we can test capabilities and set up context sharing
+	struct RestoreContext
+	{
+		RestoreContext()
+		{
+			_hdc = wglGetCurrentDC();
+			_hglrc = wglGetCurrentContext();
+		}
+		~RestoreContext()
+		{
+			wglMakeCurrent(_hdc, _hglrc);
+		}
+	protected:
+		HDC      _hdc;
+		HGLRC    _hglrc;
+	} restoreContext;
+#endif
+
+	_realized = true;
+	bool result = makeCurrent();
+	_realized = false;
+
+	if (!result)
+	{
+		return false;
+	}
+
+	if (ImGui::GetCurrentContext() == nullptr) {
+		//--------------------create imgui context----------------------------------
+		unsigned int major = 3, minor = 3;
+		sscanf(OSG_GL_CONTEXT_VERSION, "%d.%d", &major, &minor);
+		char versionString[16];
+		sprintf(versionString, "#version %d", major * 100 + minor * 10);
+		auto ext = getState()->get<osg::GLExtensions>();
+		auto extWrap = static_cast<GLWrapper*>(ext);
+		auto ctxTmp = ImGui::CreateContext();
+		extWrap->ImGui_ImplOpenGL3_Init(versionString);
+		extWrap->ImGui_ImplOpenGL3_NewFrame();
+
+		{
+			ImGuiIO& io = ImGui::GetIO();
+			io.KeyMap[ImGuiKey_Tab] = ImGuiKey_Tab;
+			io.KeyMap[ImGuiKey_LeftArrow] = ImGuiKey_LeftArrow;
+			io.KeyMap[ImGuiKey_RightArrow] = ImGuiKey_RightArrow;
+			io.KeyMap[ImGuiKey_UpArrow] = ImGuiKey_UpArrow;
+			io.KeyMap[ImGuiKey_DownArrow] = ImGuiKey_DownArrow;
+			io.KeyMap[ImGuiKey_PageUp] = ImGuiKey_PageUp;
+			io.KeyMap[ImGuiKey_PageDown] = ImGuiKey_PageDown;
+			io.KeyMap[ImGuiKey_Home] = ImGuiKey_Home;
+			io.KeyMap[ImGuiKey_End] = ImGuiKey_End;
+			io.KeyMap[ImGuiKey_Delete] = ImGuiKey_Delete;
+			io.KeyMap[ImGuiKey_Backspace] = ImGuiKey_Backspace;
+			io.KeyMap[ImGuiKey_Enter] = ImGuiKey_Enter;
+			io.KeyMap[ImGuiKey_Escape] = ImGuiKey_Escape;
+			io.KeyMap[ImGuiKey_A] = osgGA::GUIEventAdapter::KeySymbol::KEY_A;
+			io.KeyMap[ImGuiKey_C] = osgGA::GUIEventAdapter::KeySymbol::KEY_C;
+			io.KeyMap[ImGuiKey_V] = osgGA::GUIEventAdapter::KeySymbol::KEY_V;
+			io.KeyMap[ImGuiKey_X] = osgGA::GUIEventAdapter::KeySymbol::KEY_X;
+			io.KeyMap[ImGuiKey_Y] = osgGA::GUIEventAdapter::KeySymbol::KEY_Y;
+			io.KeyMap[ImGuiKey_Z] = osgGA::GUIEventAdapter::KeySymbol::KEY_Z;
+
+			//ImFont* font = io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\consola.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesChineseSimplifiedCommon());
+			//io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+			ImGui::StyleColorsDark();
+		}
+	}
+	//--------------------create imgui context----------------------------------
+
     if (_traits.valid() && (_traits->sharedContext.valid() || _traits->vsync || _traits->swapGroupEnabled))
     {
-		#ifdef OSG_USE_EGL
-		#else
-		// make context current so we can test capabilities and set up context sharing
-        struct RestoreContext
-        {
-            RestoreContext()
-            {
-                _hdc = wglGetCurrentDC();
-                _hglrc = wglGetCurrentContext();
-            }
-            ~RestoreContext()
-            {
-                wglMakeCurrent(_hdc,_hglrc);
-            }
-        protected:
-            HDC      _hdc;
-            HGLRC    _hglrc;
-        } restoreContext;
-		#endif
-
-        _realized = true;
-        bool result = makeCurrent();
-        _realized = false;
-
-        if (!result)
-        {
-            return false;
-        }
-
-		#ifdef OSG_USE_EGL
+        #ifdef OSG_USE_EGL
 		#else
         // set up sharing of contexts if required
         GraphicsHandleWin32* graphicsHandleWin32 = dynamic_cast<GraphicsHandleWin32*>(_traits->sharedContext.get());
@@ -2063,11 +2107,20 @@ bool GraphicsWindowWin32::makeCurrentImplementation()
         return false;
     }
 	#endif
+
     return true;
 }
 
 bool GraphicsWindowWin32::releaseContextImplementation()
 {
+    if(ImGui::GetCurrentContext() == nullptr)
+    {
+		auto ext = getState()->get<osg::GLExtensions>();
+		auto extWrap = static_cast<GLWrapper*>(ext);
+		extWrap->ImGui_ImplOpenGL3_Shutdown();
+		ImGui::DestroyContext();
+    }
+
 	#ifdef OSG_USE_EGL
 	if(!::eglMakeCurrent(_eglContextInfo.eglDisplay, _eglContextInfo.eglSurface, EGL_NO_SURFACE, EGL_NO_CONTEXT))
 	#else

@@ -5,16 +5,19 @@
 #include <osgGA/GUIEventHandler>
 #include <osgViewer/Export>
 
+struct ImGuiViewportP;
+
 namespace osgViewer
 {
 
 class OSGVIEWER_EXPORT ImGuiHandler : public osgGA::GUIEventHandler
 {
+	friend class ImGuiRenderObject;
 public:
 
     ImGuiHandler();
 
-    ~ImGuiHandler() {}
+	~ImGuiHandler();
 
     bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa);
 
@@ -33,6 +36,7 @@ private:
 	int		_width, _height;
 
 	osg::ref_ptr<osg::Operation> _renderOperation;
+	ImGuiViewportP* _imvp[2];
 };
 
 }
