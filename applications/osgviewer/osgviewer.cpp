@@ -196,9 +196,6 @@ int main(int argc, char** argv)
 
         void operator()(osg::Node* node, osg::NodeVisitor* nv)
         {
-            auto fm = nv->getFrameStamp()->getFrameNumber();
-            if (fm < 10)
-                return;
 			ImGui::Begin("hello world");
 			ImGui::Text("This is some useful text.");
 			ImGui::Button("Button");

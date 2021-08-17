@@ -173,5 +173,4 @@ ShaderStorageBufferBinding::ShaderStorageBufferBinding(const ShaderStorageBuffer
 {
 }
 
-
 } // namespace osg
