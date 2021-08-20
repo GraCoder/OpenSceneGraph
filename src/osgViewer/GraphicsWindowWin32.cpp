@@ -1793,11 +1793,23 @@ HGLRC GraphicsWindowWin32::createContextImplementation()
             {
                 unsigned int idx( 0 );
                 int attribs[ 16 ];
+                
+                GLint cmajor = 0, cminor = 0;
+                glGetIntegerv(GL_MAJOR_VERSION, &cmajor);
+                glGetIntegerv(GL_MINOR_VERSION, &cminor);
 
                 unsigned int major = 1, minor = 0;
                 if( !_traits->getContextVersion(major, minor) || major<3 )
                 {
                     OSG_NOTIFY( osg::WARN ) << "GL3: Non-GL3 version number: " << _traits->glContextVersion << std::endl;
+                }
+
+                if (cmajor * 10 + cminor > major * 10 + minor)
+                {
+                    major = cmajor; minor = cminor;
+                    char version[4];
+                    sprintf(version, "%d.%d", major, minor);
+                    _traits->glContextVersion = version;
                 }
 
                 attribs[ idx++ ] = WGL_CONTEXT_MAJOR_VERSION_ARB;
