@@ -448,6 +448,9 @@ class OSG_EXPORT BufferObject : public Object
         /** Get the type of usage the buffer object has been set up for.*/
         GLenum getUsage() const { return _profile._usage; }
 
+		void setSize(GLuint sz) { _profile._size = sz; }
+		GLuint getSize() const { return _profile._size; }
+
         /** Enable GL4 buffer storage features (override usage if setted) */
         void setMappingBitfield(GLbitfield b){ if(_profile._mappingbitfield == b) return; _profile._mappingbitfield = b; }
         GLbitfield getMappingBitfield() const { return _profile._mappingbitfield; }
