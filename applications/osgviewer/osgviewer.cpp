@@ -129,6 +129,9 @@ int main(int argc, char** argv)
         viewer.setCameraManipulator( keyswitchManipulator.get() );
     }
 
+	viewer.addEventHandler(new osgViewer::ImGuiHandler);
+    //viewer.setThreadingModel(viewer.SingleThreaded);
+
     // add the state manipulator
     viewer.addEventHandler( new osgGA::StateSetManipulator(viewer.getCamera()->getOrCreateStateSet()) );
 
@@ -152,9 +155,6 @@ int main(int argc, char** argv)
 
     // add the screen capture handler
     viewer.addEventHandler(new osgViewer::ScreenCaptureHandler);
-
-	viewer.addEventHandler(new osgViewer::ImGuiHandler);
-    //viewer.setThreadingModel(viewer.SingleThreaded);
 
     osg::ElapsedTime elapsedTime;
 
@@ -202,6 +202,10 @@ int main(int argc, char** argv)
 			ImGui::SameLine();
 			ImGui::Text("counter = ");
 			ImGui::Text("Application average 3f ms/frame (1f FPS)");
+			static char ch[512];
+			if (ImGui::InputText("", ch, 512)) 				{
+				printf("");
+			}
 			ImGui::End();
         }
     };

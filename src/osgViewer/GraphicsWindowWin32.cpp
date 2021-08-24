@@ -1804,7 +1804,7 @@ HGLRC GraphicsWindowWin32::createContextImplementation()
                     OSG_NOTIFY( osg::WARN ) << "GL3: Non-GL3 version number: " << _traits->glContextVersion << std::endl;
                 }
 
-                if (cmajor * 10 + cminor > major * 10 + minor)
+                if (unsigned int(cmajor * 10 + cminor) > major * 10 + minor)
                 {
                     major = cmajor; minor = cminor;
                     char version[4];
@@ -1982,11 +1982,18 @@ bool GraphicsWindowWin32::realizeImplementation()
 		auto ext = getState()->get<osg::GLExtensions>();
 		auto extWrap = static_cast<GLWrapper*>(ext);
 		auto ctxTmp = ImGui::CreateContext();
+		IM_UNUSED(ctxTmp);
+
+		ImGui::StyleColorsDark();
+		ImGuiIO& io = ImGui::GetIO();
+		ImFont* font = io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\simhei.ttf",
+			24.0f, NULL, io.Fonts->GetGlyphRangesChineseSimplifiedCommon());
+		IM_UNUSED(font);
+
 		extWrap->ImGui_ImplOpenGL3_Init(versionString);
 		extWrap->ImGui_ImplOpenGL3_NewFrame();
 
 		{
-			ImGuiIO& io = ImGui::GetIO();
 			io.KeyMap[ImGuiKey_Tab] = ImGuiKey_Tab;
 			io.KeyMap[ImGuiKey_LeftArrow] = ImGuiKey_LeftArrow;
 			io.KeyMap[ImGuiKey_RightArrow] = ImGuiKey_RightArrow;
@@ -2007,9 +2014,7 @@ bool GraphicsWindowWin32::realizeImplementation()
 			io.KeyMap[ImGuiKey_Y] = osgGA::GUIEventAdapter::KeySymbol::KEY_Y;
 			io.KeyMap[ImGuiKey_Z] = osgGA::GUIEventAdapter::KeySymbol::KEY_Z;
 
-			//ImFont* font = io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\consola.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesChineseSimplifiedCommon());
 			//io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-			ImGui::StyleColorsDark();
 		}
 	}
 	//--------------------create imgui context----------------------------------
@@ -2176,7 +2181,7 @@ bool GraphicsWindowWin32::checkEvents()
     if (!_realized) return false;
 
     MSG msg;
-    while (::PeekMessage(&msg, _hwnd, 0, 0, PM_REMOVE))
+    while (::PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
     {
         ::TranslateMessage(&msg);
         ::DispatchMessage(&msg);
@@ -2579,6 +2584,11 @@ void GraphicsWindowWin32::transformMouseXY( float& x, float& y )
 
 LRESULT GraphicsWindowWin32::handleNativeWindowingEvent( HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
 {
+	if (hwnd != _hwnd) {
+		::PostMessage(hwnd, uMsg, wParam, lParam);
+		return 0;
+	}
+
     //!@todo adapt windows event time to osgGA event queue time for better resolution
     double eventTime  = getEventQueue()->getTime();
     _timeOfLastCheckEvents = eventTime;
@@ -2749,6 +2759,28 @@ LRESULT GraphicsWindowWin32::handleNativeWindowingEvent( HWND hwnd, UINT uMsg, W
                 }
             }
             break;
+		////////////////////
+		case WM_IME_CHAR:
+		{
+			int key = wParam;
+			if (key > 127) {
+				BYTE low = (BYTE)(wParam & 0x00FF);
+				BYTE high = (BYTE)(wParam >> 8);
+				wParam = MAKEWORD(high, low);
+				wchar_t ch[2];
+				MultiByteToWideChar(CP_ACP, 0, (LPCSTR)&wParam, 4, ch, 2);
+				key = ch[0];
+			}
+			getEventQueue()->charPress(key, eventTime);
+		}
+		break;
+		case WM_CHAR:
+		{
+			int key = wParam;
+			getEventQueue()->charPress(key, eventTime);
+		}
+		break;
+		////////////////////
 
         ////////////////////
         case WM_KEYDOWN    :

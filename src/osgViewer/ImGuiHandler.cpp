@@ -102,7 +102,9 @@ ImGuiHandler::ImGuiHandler()
 	_camera->setRenderer(new Renderer(_camera.get()));
 	_camera->setProjectionResizePolicy(osg::Camera::FIXED);
 
-	osg::DisplaySettings::ShaderHint shaderHint = osg::DisplaySettings::instance()->getShaderHint();
+	osg::DisplaySettings::ShaderHint shaderHint
+		= osg::DisplaySettings::instance()->getShaderHint();
+	void()(shaderHint);
 	_camera->setRenderOrder(osg::Camera::POST_RENDER, 999);
 	_camera->setReferenceFrame(osg::Transform::ABSOLUTE_RF);
 	_camera->setViewMatrix(osg::Matrix::identity());
@@ -166,11 +168,16 @@ bool ImGuiHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdap
 			}
 
 			// Not sure this < 512 is correct here....
-			if (isKeyDown && imgui_key >= 32 && imgui_key < 512) {
-				io.AddInputCharacter((unsigned int)c);
-			}
+			//if (isKeyDown && imgui_key >= 32 && imgui_key < 512) {
+			//	io.AddInputCharacter((unsigned int)c);
+			//}
 
 			return wantCaptureKeyboard;
+		}
+		case (osgGA::GUIEventAdapter::CHAR):
+		{
+			unsigned int k = ea.getKey();
+			io.AddInputCharacter(k);
 		}
 		case (osgGA::GUIEventAdapter::RELEASE):
 		{
