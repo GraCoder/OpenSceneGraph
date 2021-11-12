@@ -69,7 +69,8 @@ int main( int argc, char** argv )
     sourceNode->setDataVariance( osg::Object::DYNAMIC );
     sourceNode->getOrCreateStateSet()->setAttributeAndModes( computeProg.get() );
     sourceNode->getOrCreateStateSet()->addUniform( new osg::Uniform("targetTex", (int)0) );
-    sourceNode->getOrCreateStateSet()->setTextureAttributeAndModes( 0, tex2D.get() );
+    //sourceNode->getOrCreateStateSet()->setTextureAttributeAndModes( 0, tex2D.get() );
+    sourceNode->getOrCreateStateSet()->setAttributeAndModes(imagbinding.get());
 
     // Display the texture on a quad. We will also be able to operate on the data if reading back to CPU side
     osg::Geometry* geom = osg::createTexturedQuadGeometry(
@@ -78,7 +79,8 @@ int main( int argc, char** argv )
     quad->addDrawable( geom );
     quad->getOrCreateStateSet()->setMode( GL_LIGHTING, osg::StateAttribute::OFF );
     quad->getOrCreateStateSet()->setTextureAttributeAndModes( 0, tex2D.get() );
-    quad->getOrCreateStateSet()->setAttributeAndModes(imagbinding.get());
+    quad->getOrCreateStateSet()->addUniform( new osg::Uniform("targetTex", (int)0) );
+    //quad->getOrCreateStateSet()->setAttributeAndModes(imagbinding.get());
     // Create the scene graph and start the viewer
     osg::ref_ptr<osg::Group> scene = new osg::Group;
     scene->addChild( sourceNode );

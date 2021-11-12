@@ -732,7 +732,7 @@ int main(int, char**)
     // create the model
     osg::Group* root = new osg::Group;
 
-    //root->addChild(createScene());
+    root->addChild(createScene());
     //root->addChild(createBackground());
 
     //osgDB::writeNodeFile(*root,"geometry.osgt");
