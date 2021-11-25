@@ -54,6 +54,7 @@ int main(int argc, char** argv)
     arguments.getApplicationUsage()->addCommandLineOption("--stats","print out load and compile timing stats");
 
     osgViewer::Viewer viewer(arguments);
+    //viewer.setThreadingModel(viewer.SingleThreaded);
 
     unsigned int helpType = 0;
     if ((helpType = arguments.readHelpType()))
@@ -196,6 +197,11 @@ int main(int argc, char** argv)
 
         void operator()(osg::Node* node, osg::NodeVisitor* nv)
         {
+            auto xx = nv->getFrameStamp()->getFrameNumber();
+
+            if (xx < 10)
+                return;
+
 			ImGui::Begin("hello world");
 			ImGui::Text("This is some useful text.");
 			ImGui::Button("Button");

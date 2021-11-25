@@ -23,7 +23,9 @@ public:
 
 protected:
 
-	void newFrame();
+	void initImGui();
+
+	void newImGuiFrame(osgViewer::Viewer *viewer);
 
 private:
 	osg::ref_ptr<osg::Camera> _camera;

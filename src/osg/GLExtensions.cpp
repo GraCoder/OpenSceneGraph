@@ -565,6 +565,7 @@ GLExtensions::GLExtensions(unsigned int in_contextID):
             << std::endl;
 
 
+    setGLExtensionFuncPtr(glGetStringi, "glGetStringi", "glGetStringi", validContext);
     setGLExtensionFuncPtr(glDrawBuffers, "glDrawBuffers", "glDrawBuffersARB", validContext);
     setGLExtensionFuncPtr(glAttachShader, "glAttachShader", "glAttachObjectARB", validContext);
     setGLExtensionFuncPtr(glBindAttribLocation, "glBindAttribLocation", "glBindAttribLocationARB", validContext);

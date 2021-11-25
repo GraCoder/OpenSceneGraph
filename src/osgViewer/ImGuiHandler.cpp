@@ -10,7 +10,7 @@
 
 #include <osgViewer/imgui/imgui.h>
 #include "imgui/imgui_internal.h"
-#include "imgui_impl_opengl3.cpp"
+#include "imgui_impl_opengl3.hpp"
 
 namespace osgViewer {
 
@@ -56,8 +56,9 @@ static int ConvertFromOSGKey(int key)
 
 class ImGuiRenderObject : public osg::Drawable {
 public:
-	ImGuiRenderObject(ImGuiHandler *handler)
+	ImGuiRenderObject(ImGuiHandler* handler)
 		: _handler(handler)
+		, _imInit(true)
 	{
 		setCullingActive(false);
 	}
@@ -70,6 +71,13 @@ public:
 	{
 		auto ext = renderInfo.getState()->get<osg::GLExtensions>();
 		auto extWrap = static_cast<GLWrapper*>(ext);
+		if (_imInit)
+		{
+			extWrap->ImGui_ImplOpenGL3_Init(nullptr);
+			_imInit = false;
+		}
+
+		extWrap->ImGui_ImplOpenGL3_NewFrame();
 
 		auto frameNum = renderInfo.getState()->getFrameStamp()->getFrameNumber();
 		frameNum = frameNum % 2;
@@ -78,7 +86,8 @@ public:
 	}
 
 private:
-	ImGuiHandler* _handler;
+	mutable bool	_imInit;
+	ImGuiHandler*	_handler;
 };
 
 class ImGuiUpdateOperation : public osg::Operation {
@@ -102,9 +111,8 @@ ImGuiHandler::ImGuiHandler()
 	_camera->setRenderer(new Renderer(_camera.get()));
 	_camera->setProjectionResizePolicy(osg::Camera::FIXED);
 
-	osg::DisplaySettings::ShaderHint shaderHint
-		= osg::DisplaySettings::instance()->getShaderHint();
-	void()(shaderHint);
+	//osg::DisplaySettings::ShaderHint shaderHint
+	//	= osg::DisplaySettings::instance()->getShaderHint();
 	_camera->setRenderOrder(osg::Camera::POST_RENDER, 999);
 	_camera->setReferenceFrame(osg::Transform::ABSOLUTE_RF);
 	_camera->setViewMatrix(osg::Matrix::identity());
@@ -118,7 +126,7 @@ ImGuiHandler::ImGuiHandler()
 
 	_renderOperation = new ImGuiUpdateOperation;
 
-	_imvp[1] = IM_NEW(ImGuiViewportP)();
+	initImGui();
 }
 
 ImGuiHandler::~ImGuiHandler()
@@ -220,13 +228,7 @@ bool ImGuiHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdap
 		}
 		case(osgGA::GUIEventAdapter::FRAME):
 		{
-			if(_imvp[0] == nullptr)
-				_imvp[0] = ImGui::GetCurrentContext()->Viewports[0];
-			auto frameNum = viewer->getViewerFrameStamp()->getFrameNumber();
-			frameNum = frameNum % 2;
-			ImGui::GetCurrentContext()->Viewports[0] = _imvp[frameNum];
-			newFrame();
-			viewer->addUpdateOperation(_renderOperation);
+			newImGuiFrame(viewer);
 			break;
 		}
 		case(osgGA::GUIEventAdapter::CLOSE_WINDOW):
@@ -238,15 +240,61 @@ bool ImGuiHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdap
 	return false;
 }
 
-void ImGuiHandler::newFrame()
+void ImGuiHandler::initImGui()
+{
+	//--------------------create imgui context----------------------------------
+	auto ctx = ImGui::CreateContext();
+	IM_UNUSED(ctx);
+
+	ImGui::StyleColorsDark();
+	ImGuiIO& io = ImGui::GetIO();
+	//ImFont* font = io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\simhei.ttf",
+	//	24.0f, NULL, io.Fonts->GetGlyphRangesChineseSimplifiedCommon());
+	//IM_UNUSED(font);
+
+	auto* bd = GLWrapper::ImGui_ImplOpenGL3_GetBackendData();
+	unsigned char* pixels; int width, height;
+	io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
+
+	_imvp[0] = ImGui::GetCurrentContext()->Viewports[0];
+	_imvp[1] = IM_NEW(ImGuiViewportP);
+
+	{
+		io.KeyMap[ImGuiKey_Tab] = ImGuiKey_Tab;
+		io.KeyMap[ImGuiKey_LeftArrow] = ImGuiKey_LeftArrow;
+		io.KeyMap[ImGuiKey_RightArrow] = ImGuiKey_RightArrow;
+		io.KeyMap[ImGuiKey_UpArrow] = ImGuiKey_UpArrow;
+		io.KeyMap[ImGuiKey_DownArrow] = ImGuiKey_DownArrow;
+		io.KeyMap[ImGuiKey_PageUp] = ImGuiKey_PageUp;
+		io.KeyMap[ImGuiKey_PageDown] = ImGuiKey_PageDown;
+		io.KeyMap[ImGuiKey_Home] = ImGuiKey_Home;
+		io.KeyMap[ImGuiKey_End] = ImGuiKey_End;
+		io.KeyMap[ImGuiKey_Delete] = ImGuiKey_Delete;
+		io.KeyMap[ImGuiKey_Backspace] = ImGuiKey_Backspace;
+		io.KeyMap[ImGuiKey_Enter] = ImGuiKey_Enter;
+		io.KeyMap[ImGuiKey_Escape] = ImGuiKey_Escape;
+		io.KeyMap[ImGuiKey_A] = osgGA::GUIEventAdapter::KeySymbol::KEY_A;
+		io.KeyMap[ImGuiKey_C] = osgGA::GUIEventAdapter::KeySymbol::KEY_C;
+		io.KeyMap[ImGuiKey_V] = osgGA::GUIEventAdapter::KeySymbol::KEY_V;
+		io.KeyMap[ImGuiKey_X] = osgGA::GUIEventAdapter::KeySymbol::KEY_X;
+		io.KeyMap[ImGuiKey_Y] = osgGA::GUIEventAdapter::KeySymbol::KEY_Y;
+		io.KeyMap[ImGuiKey_Z] = osgGA::GUIEventAdapter::KeySymbol::KEY_Z;
+
+		//io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+	}
+}
+
+void ImGuiHandler::newImGuiFrame(osgViewer::Viewer *viewer)
 {
 	ImGuiIO& io = ImGui::GetIO();
-	//if (w > 0 && h > 0)
-	//	io.DisplayFramebufferScale = ImVec2((float)display_w / w, (float)display_h / h);
 
-	//double currentTime = renderInfo.getView()->getFrameStamp()->getSimulationTime();
+	//double currentTime = viewer->getFrameStamp()->getSimulationTime();
 	//io.DeltaTime = currentTime - time_ + 0.0000001;
 	//time_ = currentTime;
+
+	unsigned frameNum = viewer->getFrameStamp()->getFrameNumber();
+	frameNum = frameNum % 2;
+	ImGui::GetCurrentContext()->Viewports[0] = _imvp[frameNum];
 
 	for (int i = 0; i < 3; i++) {
 		io.MouseDown[i] = _mousePressed[i];
@@ -258,8 +306,11 @@ void ImGuiHandler::newFrame()
 
 	io.MouseWheel = _mouseWheel;
 	_mouseWheel = 0.0f;
-	
+
+
 	ImGui::NewFrame();
+
+	viewer->addUpdateOperation(_renderOperation);
 }
 
 }

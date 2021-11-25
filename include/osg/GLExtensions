@@ -228,6 +228,7 @@ class OSG_EXPORT GLExtensions : public osg::Referenced
         bool isCubeMapSupported;
         bool isClipControlSupported;
 
+        const GLubyte* (GL_APIENTRY* glGetStringi)(GLenum name, GLuint index);
         void (GL_APIENTRY * glDrawBuffers)(GLsizei n, const GLenum *bufs);
         void (GL_APIENTRY * glAttachShader)(GLuint program, GLuint shader);
         void (GL_APIENTRY * glBindAttribLocation)(GLuint program, GLuint index, const GLchar *name);
