@@ -131,7 +131,7 @@ int main(int argc, char** argv)
     }
 
 	viewer.addEventHandler(new osgViewer::ImGuiHandler);
-    //viewer.setThreadingModel(viewer.SingleThreaded);
+    viewer.setThreadingModel(viewer.SingleThreaded);
 
     // add the state manipulator
     viewer.addEventHandler( new osgGA::StateSetManipulator(viewer.getCamera()->getOrCreateStateSet()) );

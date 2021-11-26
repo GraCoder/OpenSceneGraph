@@ -109,6 +109,7 @@ ImGuiHandler::ImGuiHandler()
 	OSG_INFO << "ImGuiHandler::ImGuiHandler()" << std::endl;
 
 	_camera = new osg::Camera;
+	_camera->setName("ImGuiCamera");
 	//_camera->getOrCreateStateSet()->setGlobalDefaults();
 	_camera->setRenderer(new Renderer(_camera.get()));
 	_camera->setProjectionResizePolicy(osg::Camera::FIXED);
@@ -146,6 +147,7 @@ bool ImGuiHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdap
 		viewer->getContexts(ctxs, false);
 		if (ctxs.empty())
 			return false;
+		//add to context, so the childen can be render.
 		_camera->setGraphicsContext(ctxs[0]);
 	}
 	auto imctx = ImGui::GetCurrentContext();
