@@ -443,7 +443,7 @@ void Material::apply(State&) const
 #else
 void Material::apply(State& state) const
 {
-    OSG_NOTICE<<"Warning: Material::apply(State&) - not supported."<<std::endl;
+    OSG_DEBUG<<"Warning: Material::apply(State&) - not supported."<<std::endl;
 
     state.Color(_diffuseFront.r(), _diffuseFront.g(), _diffuseFront.b(), _diffuseFront.a());
 }

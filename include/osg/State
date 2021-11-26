@@ -1224,10 +1224,10 @@ class OSG_EXPORT State : public Referenced
                 if (setActiveTextureUnit(unit))
                 {
                     ms.last_applied_value = enabled;
-
+#ifndef OSG_GL3_AVAILABLE
                     if (enabled) glEnable(mode);
                     else glDisable(mode);
-
+#endif
                     if (_checkGLErrors==ONCE_PER_ATTRIBUTE) checkGLErrors(mode);
 
                     return true;
