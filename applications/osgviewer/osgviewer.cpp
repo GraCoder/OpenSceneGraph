@@ -202,7 +202,7 @@ int main(int argc, char** argv)
             if (xx < 10)
                 return;
 
-			ImGui::Begin("hello world");
+			ImGui::Begin("hello \xe4\xb8\x96\xe7\x95\x8c");
 			ImGui::Text("This is some useful text.");
 			ImGui::Button("Button");
 			ImGui::SameLine();

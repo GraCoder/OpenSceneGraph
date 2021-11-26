@@ -4,6 +4,8 @@
 
 #include <osg/Geometry>
 
+#include <osgDB/FileUtils>
+
 #include <osgViewer/Viewer>
 #include <osgViewer/ImGuiHandler>
 #include <osgViewer/Renderer>
@@ -248,9 +250,13 @@ void ImGuiHandler::initImGui()
 
 	ImGui::StyleColorsDark();
 	ImGuiIO& io = ImGui::GetIO();
-	//ImFont* font = io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\simhei.ttf",
-	//	24.0f, NULL, io.Fonts->GetGlyphRangesChineseSimplifiedCommon());
-	//IM_UNUSED(font);
+	
+	std::string fontPath = "C:\\Windows\\Fonts\\simhei.ttf";
+	if (osgDB::fileExists(fontPath)) {
+		ImFont* font = io.Fonts->AddFontFromFileTTF(fontPath.c_str(),
+			14.0f, NULL, io.Fonts->GetGlyphRangesChineseSimplifiedCommon());
+		IM_UNUSED(font);
+	}
 
 	auto* bd = GLWrapper::ImGui_ImplOpenGL3_GetBackendData();
 	unsigned char* pixels; int width, height;
