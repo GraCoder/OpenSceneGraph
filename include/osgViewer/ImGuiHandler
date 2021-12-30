@@ -12,7 +12,7 @@ namespace osgViewer
 
 class OSGVIEWER_EXPORT ImGuiHandler : public osgGA::GUIEventHandler
 {
-	friend class ImGuiRenderObject;
+	friend class ImGuiRenderCallback;
 public:
 
     ImGuiHandler();
@@ -27,6 +27,7 @@ protected:
 
 	void newImGuiFrame(osgViewer::Viewer *viewer);
 
+private:
 private:
 	osg::ref_ptr<osg::Camera> _camera;
 

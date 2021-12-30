@@ -56,27 +56,31 @@ static int ConvertFromOSGKey(int key)
 	}
 }
 
-class ImGuiRenderObject : public osg::Drawable {
+class ImGuiUpdateOperation : public osg::Operation {
 public:
-	ImGuiRenderObject(ImGuiHandler* handler)
-		: _handler(handler)
-		, _imInit(true)
+	ImGuiUpdateOperation() { }
+	~ImGuiUpdateOperation() { }
+	void operator () (osg::Object*)
 	{
-		setCullingActive(false);
+		ImGui::EndFrame();
+		ImGui::Render();
 	}
+};
 
-	~ImGuiRenderObject()
-	{
-	}
+class ImGuiRenderCallback : public osg::Camera::DrawCallback {
+public:
+	ImGuiRenderCallback(ImGuiHandler *handler)
+		: _initialize(true)
+		, _handler(handler)
+	{ }
 
-	void drawImplementation(osg::RenderInfo& renderInfo) const
+	void operator() (osg::RenderInfo& renderInfo) const override
 	{
 		auto ext = renderInfo.getState()->get<osg::GLExtensions>();
 		auto extWrap = static_cast<GLWrapper*>(ext);
-		if (_imInit)
-		{
+		if (_initialize) {
 			extWrap->ImGui_ImplOpenGL3_Init(nullptr);
-			_imInit = false;
+			_initialize = false;
 		}
 
 		extWrap->ImGui_ImplOpenGL3_NewFrame();
@@ -88,20 +92,10 @@ public:
 	}
 
 private:
-	mutable bool	_imInit;
+	mutable bool	_initialize;
 	ImGuiHandler*	_handler;
 };
 
-class ImGuiUpdateOperation : public osg::Operation {
-public:
-	ImGuiUpdateOperation() { }
-	~ImGuiUpdateOperation() { }
-	void operator () (osg::Object*)
-	{
-		ImGui::EndFrame();
-		ImGui::Render();
-	}
-};
 
 ImGuiHandler::ImGuiHandler()
 	: _initialized(false)
@@ -125,7 +119,6 @@ ImGuiHandler::ImGuiHandler()
 	// only clear the depth buffer
 	_camera->setClearMask(0);
 	_camera->setAllowEventFocus(false);
-	_camera->addChild(new ImGuiRenderObject(this));
 
 	_renderOperation = new ImGuiUpdateOperation;
 
@@ -141,23 +134,24 @@ ImGuiHandler::~ImGuiHandler()
 bool ImGuiHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
 {
 	osgViewer::Viewer* viewer = dynamic_cast<osgViewer::Viewer*>(&aa);
-	if (_camera->getGraphicsContext() == nullptr)
-	{
-		std::vector<osg::GraphicsContext*> ctxs;
-		viewer->getContexts(ctxs, false);
-		if (ctxs.empty())
-			return false;
-		//add to context, so the childen can be render.
-		_camera->setGraphicsContext(ctxs[0]);
-	}
-	auto imctx = ImGui::GetCurrentContext();
-	if (imctx == nullptr) return false;
+
+	auto ctx = viewer->getCamera()->getGraphicsContext();
 
 	ImGuiIO& io = ImGui::GetIO();
+
+	if (_initialized && ctx) {
+		auto traits = ctx->getTraits();
+		io.DisplaySize = ImVec2(traits->width, traits->height);
+	}
+	else {
+		_initialized = true;
+		io.DisplaySize = ImVec2(800, 640);
+		auto camera = viewer->getCamera();
+		camera->setPostDrawCallback(new ImGuiRenderCallback(this));
+	}
+
 	const bool wantCaptureMouse = io.WantCaptureMouse;
 	const bool wantCaptureKeyboard = io.WantCaptureKeyboard;
-	auto traits = _camera->getGraphicsContext()->getTraits();
-	io.DisplaySize = ImVec2(traits->width, traits->height);
 
 	switch (ea.getEventType()) {
 		case osgGA::GUIEventAdapter::KEYDOWN:
