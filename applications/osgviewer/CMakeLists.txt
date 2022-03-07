@@ -2,4 +2,4 @@ SET(TARGET_SRC osgviewer.cpp )
 
 #set(CMAKE_EXE_LINKER_FLAGS_DEBUG  "")
 
-SETUP_APPLICATION(osgviewer1)
+SETUP_APPLICATION(osgviewer)
