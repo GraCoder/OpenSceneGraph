@@ -130,6 +130,8 @@ int main(int argc, char** argv)
         viewer.setCameraManipulator( keyswitchManipulator.get() );
     }
 
+	GL_TRIANGLES;
+
 	viewer.addEventHandler(new osgViewer::ImGuiHandler);
     viewer.setThreadingModel(viewer.SingleThreaded);
 

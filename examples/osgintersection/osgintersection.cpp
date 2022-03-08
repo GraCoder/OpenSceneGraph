@@ -58,8 +58,9 @@ int main(int argc, char **argv)
 
     if (!scene)
     {
-        std::cout<<"No model loaded, please specify a valid model on the command line."<<std::endl;
-        return 0;
+        scene = osg::createTexturedQuadGeometry(osg::Vec3(-5, -5, 0), osg::Vec3(10, 0, 0), osg::Vec3(0, 10, 0));
+        //std::cout<<"No model loaded, please specify a valid model on the command line."<<std::endl;
+        //return 0;
     }
 
     std::cout<<"Intersection "<<std::endl;
@@ -79,8 +80,8 @@ int main(int argc, char **argv)
 
         osg::Vec3d start = bs.center() + osg::Vec3d(0.0,bs.radius(),0.0);
         osg::Vec3d end = bs.center() - osg::Vec3d(0.0, bs.radius(),0.0);
-        osg::Vec3d deltaRow( 0.0, 0.0, bs.radius()*0.01);
-        osg::Vec3d deltaColumn( bs.radius()*0.01, 0.0, 0.0);
+        osg::Vec3d deltaRow( 0.0, 0.0, 0.0/* bs.radius()*0.01*/);
+        osg::Vec3d deltaColumn( /*bs.radius() * 0.01*/0.0, 0.0, 0.0);
 
         osgSim::LineOfSight los;
 
@@ -278,6 +279,5 @@ int main(int argc, char **argv)
             }
         }
     }
-
     return 0;
 }

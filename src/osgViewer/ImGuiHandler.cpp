@@ -3,6 +3,8 @@
 #include <stdio.h>
 
 #include <osg/Geometry>
+#include <osg/BlendEquation>
+#include <osg/GLDefines>
 
 #include <osgDB/FileUtils>
 
