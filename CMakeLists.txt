@@ -33,6 +33,7 @@ if(COMMAND cmake_policy)
     # INTERPROCEDURAL_OPTIMIZATION is enforced when enabled.
     # Allows passing -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=ON
     cmake_policy(SET CMP0069 NEW)
+    cmake_policy(SET CMP0020 NEW)
 endif()
 
 IF(APPLE)
