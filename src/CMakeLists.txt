@@ -19,12 +19,12 @@ FOREACH( mylibfolder
         osgFX
         osgManipulator
         osgParticle
-		#osgUI
-		#osgVolume
+		osgUI
+		osgVolume
         osgShadow
-		#osgSim
+		osgSim
         osgTerrain
-		#osgWidget
+		osgWidget
         osgPresentation
         osgWrappers/serializers
         osgPlugins

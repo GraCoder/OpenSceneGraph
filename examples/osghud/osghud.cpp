@@ -372,6 +372,7 @@ int main( int argc, char **argv )
     {
         // construct the viewer.
         osgViewer::Viewer viewer;
+		viewer.setThreadingModel(viewer.SingleThreaded);
 
         SnapImage* postDrawCallback = new SnapImage("PostDrawCallback.png");
         viewer.getCamera()->setPostDrawCallback(postDrawCallback);
