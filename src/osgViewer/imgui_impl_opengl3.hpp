@@ -86,6 +86,26 @@
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 
+
+#ifndef OSG_GL3_AVAILABLE
+
+#define GL_MAJOR_VERSION                  0x821B
+#define GL_MINOR_VERSION                  0x821C
+#define GL_NUM_EXTENSIONS                 0x821D
+#define GL_ARRAY_BUFFER	                  0x8892
+#define GL_ELEMENT_ARRAY_BUFFER           0x8893
+#define GL_ACTIVE_TEXTURE                 0x84E0
+#define GL_ARRAY_BUFFER_BINDING           0x8894
+#define GL_VERTEX_ARRAY_BINDING           0x85B5
+#define GL_BLEND_DST_RGB                  0x80C8
+#define GL_BLEND_SRC_RGB                  0x80C9
+#define GL_BLEND_DST_ALPHA                0x80CA
+#define GL_BLEND_SRC_ALPHA                0x80CB
+#define GL_BLEND_EQUATION_RGB             0x8009
+typedef signed   long long int  GLsizeiptr;
+
+#endif
+
 #include "imgui.h"
 #include <osg/GLExtensions>
 #include <stdio.h>

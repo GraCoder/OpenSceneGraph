@@ -279,6 +279,15 @@ struct SnapeImageHandler : public osgGA::GUIEventHandler
 
 int main( int argc, char **argv )
 {
+	osg::Matrix m;
+	m = osg::Matrix::rotate(3.1415926 / 4, osg::Vec3d(0, 0, 1));
+	m.postMult(osg::Matrix::scale(2, 1, 1));
+	m.postMult(osg::Matrix::translate(osg::Vec3d(10, 10, 0)));
+
+	osg::Vec3d trans, scale;
+	osg::Quat rot, so;
+	m.decompose(trans, rot, scale, so);
+
     // use an ArgumentParser object to manage the program arguments.
     osg::ArgumentParser arguments(&argc,argv);
 

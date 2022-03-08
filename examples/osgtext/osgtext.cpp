@@ -117,7 +117,7 @@ osg::Group* createHUDText()
 
     {
         osgText::Text* text = new osgText::Text;
-        text->setFont(font);
+        ///text->setFont(font);
         text->setColor(fontSizeColor);
         text->setCharacterSize(fontSizeCharacterSize);
         text->setPosition(cursor);
@@ -632,8 +632,61 @@ struct TextCounterCallback : public osg::NodeCallback
 };
 
 
+bool clipLine(osg::Vec4d& a, osg::Vec4d& b)
+{
+	bool aClip = (a.z() < -a.w());
+	bool bClip = (b.z() < -b.w());
+	if (!(aClip || bClip))
+		return true;
+	else if (aClip && bClip) 
+		return false;
+
+	if (aClip)
+	{
+		const float dx = b.x() - a.x();
+		const float dy = b.y() - a.y();
+		const float dz = b.z() - a.z();
+		const float dw = b.w() - a.w();
+
+		const float t = -(a.z() + a.w()) / (dw + dz);
+		a.x() += dx * t;
+		a.y() += dy * t;
+		a.z() += dz * t;
+		a.w() += dw * t;
+	}
+	else if (bClip)
+	{
+		const float dx = a.x() - b.x();
+		const float dy = a.y() - b.y();
+		const float dz = a.z() - b.z();
+		const float dw = a.w() - b.w();
+
+		const float t = -(b.z() + b.w()) / (dw + dz);
+		b.x() += dx * t;
+		b.y() += dy * t;
+		b.z() += dz * t;
+		b.w() += dw * t;
+	}
+
+	return true;
+}
+
+
 int main(int argc, char** argv)
 {
+	auto m1 = osg::Matrix::lookAt(osg::Vec3d( 0, 0, 0 ), {1, 0, 0}, {0, 0, 1});
+	auto m2 = osg::Matrix::perspective(45, 1, 2, 100);
+
+	m2.preMult(m1);
+
+	osg::Vec4d pt1(10, 0, 0, 1), pt2(-10, 0, 0, 1), pt3(-1, 0, 0, 1);
+
+	auto ret1 = m2.preMult(pt1),
+		ret2 = m2.preMult(pt2),
+		ret3 = m2.preMult(pt3);
+
+	clipLine(ret1, ret2);
+ 
     osg::ArgumentParser arguments(&argc, argv);
 
     // construct the viewer.
