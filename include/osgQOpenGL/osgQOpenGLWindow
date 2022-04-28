@@ -11,15 +11,16 @@
 #include <osgQOpenGL/Export>
 #include <OpenThreads/ReadWriteMutex>
 
+#include <QOpenGLWindow>
+#include <QOpenGLFunctions>
+#include <QReadWriteLock>
+
 #ifdef WIN32
 //#define __gl_h_
 #include <osg/GL>
 #endif
 
 #include <osg/ArgumentParser>
-#include <QOpenGLWindow>
-#include <QOpenGLFunctions>
-#include <QReadWriteLock>
 
 class OSGRenderer;
 class QWidget;
