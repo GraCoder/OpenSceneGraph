@@ -127,6 +127,7 @@ OSGRenderer::OSGRenderer(QObject* parent, WindowType wt)
     //        killTimer(_timerId);
     //        _timerId = 0;
     //    });
+    reset();
 }
 
 OSGRenderer::OSGRenderer(osg::ArgumentParser* arguments, QObject* parent, WindowType wt)
@@ -139,6 +140,7 @@ OSGRenderer::OSGRenderer(osg::ArgumentParser* arguments, QObject* parent, Window
     //        killTimer(_timerId);
     //        _timerId = 0;
     //    });
+    reset();
 }
 
 OSGRenderer::~OSGRenderer()
@@ -227,6 +229,17 @@ void OSGRenderer::setKeyboardModifiers(QInputEvent* event)
     if(modkey & Qt::AltModifier) mask |= osgGA::GUIEventAdapter::MODKEY_ALT;
 
     m_osgWinEmb->getEventQueue()->getCurrentEventState()->setModKeyMask(mask);
+}
+
+void OSGRenderer::reset()
+{
+    m_osgInitialized = false;
+    m_windowScale = 1.0f;
+    m_continuousUpdate = true;
+
+    _timerId = 0;
+    _applicationAboutToQuit = false;
+    _osgWantsToRenderFrame = true;
 }
 
 void OSGRenderer::keyPressEvent(QKeyEvent* event)

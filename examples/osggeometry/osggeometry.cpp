@@ -26,6 +26,7 @@
 #include <osg/TemplatePrimitiveFunctor>
 #include <osg/TemplatePrimitiveIndexFunctor>
 #include <osg/io_utils>
+#include <osg/ClipNode>
 
 #include <osgDB/ReadFile>
 #include <osgDB/WriteFile>
@@ -734,61 +735,32 @@ using osg::Vec3;
 
 int main(int, char**)
 {
-
-	auto matrix1 = osg::Matrix::translate(osg::Vec3d(10, 0, 0));
-	auto matrix2 = osg::Matrix::rotate(3.1415926 / 2.0, osg::Vec3d(0, 0, 1));
-	auto xxx = (matrix1 * matrix2).preMult(osg::Vec3(0, 0, 1));
-	auto yyy = (matrix2 * matrix1).preMult(osg::Vec3(0, 0, 1));
-
-
-    // create the model
+      // create the model
     osg::Group* root = new osg::Group;
 
     //root->addChild(createScene());
     //root->addChild(createBackground());
 
 	{
-		auto geo = osg::createTexturedQuadGeometry(Vec3(0, 0, 0), Vec3(10, 0, 0), Vec3(0, 10, 0));
-		auto ss = geo->getOrCreateStateSet();
-		auto img = osgDB::readImageFile("C:\\Users\\t\\Documents\\ShareX\\Screenshots\\2021-12\\1.png");
-		ss->setTextureAttribute(0, new osg::Texture2D(img));
-		ss->setMode(GL_DEPTH_TEST, 0);
-		root->addChild(geo);
-    geo->setName("1111111");
-
-    auto line = new osg::Geometry;
-    auto vs = new osg::Vec3Array;
-    vs->push_back(osg::Vec3(-10, 0.5, 0.5));
-    vs->push_back(osg::Vec3(0.5, 0.5, 0.5));
-    vs->push_back(osg::Vec3(0.5, 0.5, 0.5));
-    vs->push_back(osg::Vec3(10, 0.5, 0.5));
-    line->setVertexArray(vs);
-
-    line->addPrimitiveSet(new osg::DrawArrays(GL_LINES, 0, 4));
-
-    osgUtil::PolytopeIntersector pot(osgUtil::Intersector::MODEL, 0, 0, 1, 1);
-    //osgUtil::LineSegmentIntersector ray(osg::Vec3d(5, 5, 30), osg::Vec3d(5, 5, -10));
-    osgUtil::IntersectionVisitor v(&pot);
-    //geo->accept(v);
-    line->accept(v);
-
-    auto xx = pot.getIntersections();
-
-    printf("");
-	}
-
-	{
-		auto geo = osg::createTexturedQuadGeometry(Vec3(5, 0, 0), Vec3(10, 0, 0), Vec3(0, 10, 0));
-		auto ss = geo->getOrCreateStateSet();
-		auto img = osgDB::readImageFile("C:\\Users\\t\\Documents\\ShareX\\Screenshots\\2021-12\\2.png");
-		ss->setTextureAttribute(0, new osg::Texture2D(img));
-		ss->setMode(GL_DEPTH_TEST, 0);
-
+        auto ss = root->getOrCreateStateSet();
 		ss->setRenderBinDetails(-1, "RenderBin");
 
-		root->addChild(geo);
-		geo->setName("22222222");
-	}
+        {
+		    auto geo = osg::createTexturedQuadGeometry(Vec3(-5, 0, 0), Vec3(10, 0, 0), Vec3(0, 10, 0));
+            root->addChild(geo);
+        }
+        {
+		    auto geo = osg::createTexturedQuadGeometry(Vec3(0, -5, 0), Vec3(10, 0, 0), Vec3(0, 10, 0));
+            root->addChild(geo);
+        }
+        {
+		    auto geo = osg::createTexturedQuadGeometry(Vec3(0, -5, 0), Vec3(10, 0, 0), Vec3(0, 10, 0));
+            root->addChild(geo);
+            geo->getOrCreateStateSet();
+        }
+     }
+
+    if(0)
 	{
 		auto trans = new osg::MatrixTransform;
 		osg::Matrix m; m.makeTranslate(osg::Vec3d(10, 0, 0));

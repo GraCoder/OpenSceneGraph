@@ -178,8 +178,11 @@ State::State():
 
 void osg::State::setGraphicsContext(GraphicsContext* context)
 {
-    static atomic_int stateId = 0;
+    static OpenThreads::Mutex mutex;
+    static int stateId = 0;
+    mutex.lock();
     _stateID = stateId++;
+    mutex.unlock();
     _graphicsContext = context;
 }
 

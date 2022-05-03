@@ -35,11 +35,11 @@ class OSGQOPENGL_EXPORT osgQOpenGLView : public QGraphicsView,
     Q_OBJECT
 
 protected:
-    OSGRenderer* m_renderer {nullptr};
-    bool _osgWantsToRenderFrame{true};
+    OSGRenderer* _renderer;
+    bool _osgWantsToRenderFrame;
     OpenThreads::ReadWriteMutex _osgMutex;
-    osg::ArgumentParser* _arguments {nullptr};
-	bool _isFirstFrame {true};
+    osg::ArgumentParser* _arguments;
+	bool _isFirstFrame;
 
     friend class OSGRenderer;
 	friend class VOpenGLWidget;

@@ -20,7 +20,7 @@ namespace osgViewer {
 
 static int ConvertFromOSGKey(int key)
 {
-	using KEY = osgGA::GUIEventAdapter::KeySymbol;
+	#define KEY  osgGA::GUIEventAdapter::KeySymbol
 
 	switch (key) {
 		case KEY::KEY_Tab:
@@ -136,14 +136,16 @@ ImGuiHandler::~ImGuiHandler()
 bool ImGuiHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
 {
 	osgViewer::Viewer* viewer = dynamic_cast<osgViewer::Viewer*>(&aa);
-
 	auto ctx = viewer->getCamera()->getGraphicsContext();
 
 	ImGuiIO& io = ImGui::GetIO();
-
-	if (_initialized && ctx) {
-		auto traits = ctx->getTraits();
-		io.DisplaySize = ImVec2(traits->width, traits->height);
+	if (_initialized) {
+		if (ctx) {
+			auto traits = ctx->getTraits();
+			io.DisplaySize = ImVec2(traits->width, traits->height);
+		}
+		else
+			io.DisplaySize = ImVec2(800, 640);
 	}
 	else {
 		_initialized = true;

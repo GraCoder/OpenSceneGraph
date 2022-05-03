@@ -2908,7 +2908,7 @@ void ImGui::RenderNavHighlight(const ImRect& bb, ImGuiID id, ImGuiNavHighlightFl
 //-----------------------------------------------------------------------------
 
 // ImGuiWindow is mostly a dumb struct. It merely has a constructor and a few helper methods
-ImGuiWindow::ImGuiWindow(ImGuiContext* context, const char* name) : DrawListInst{NULL, NULL}
+ImGuiWindow::ImGuiWindow(ImGuiContext* context, const char* name) 
 {
     memset(this, 0, sizeof(*this));
     Name = ImStrdup(name);

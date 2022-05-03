@@ -40,15 +40,15 @@ enum WindowType {
 
 class OSGQOPENGL_EXPORT OSGRenderer : public QObject, public osgViewer::Viewer
 {
-    bool                                       m_osgInitialized {false};
+    bool                                       m_osgInitialized;
     osg::ref_ptr<osgViewer::GraphicsWindow>    m_osgWinEmb;
-    float                                      m_windowScale {1.0f};
-    bool                                       m_continuousUpdate {true};
+    float                                      m_windowScale;
+    bool                                       m_continuousUpdate;
 
-    int                                        _timerId{0};
+    int                                        _timerId;
     osg::Timer                                 _lastFrameStartTime;
-    bool                                       _applicationAboutToQuit {false};
-    bool                                       _osgWantsToRenderFrame{true};
+    bool                                       _applicationAboutToQuit;
+    bool                                       _osgWantsToRenderFrame;
 	WindowType								   _windowType;
 
     Q_OBJECT
@@ -59,7 +59,7 @@ public:
     explicit OSGRenderer(QObject* parent = nullptr, WindowType = enQGLWindow);
     explicit OSGRenderer(osg::ArgumentParser* arguments, QObject* parent = nullptr, WindowType = enQGLWindow);
 
-    ~OSGRenderer() override;
+    ~OSGRenderer();
 
     bool continuousUpdate() const
     {
@@ -98,6 +98,8 @@ protected:
     void timerEvent(QTimerEvent* event) override;
 
     void setKeyboardModifiers(QInputEvent* event);
+
+    void reset();
 
 };
 
