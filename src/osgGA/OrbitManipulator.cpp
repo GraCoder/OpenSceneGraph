@@ -35,7 +35,7 @@ OrbitManipulator::OrbitManipulator( int flags )
      _trackballSize( 0.8 )
 {
     setMinimumDistance( 0.05, true );
-    setWheelZoomFactor( 0.1 );
+    setWheelZoomFactor( -0.1 );
     if( _flags & SET_CENTER_ON_WHEEL_FORWARD_MOVEMENT )
         setAnimationTime( 0.2 );
 }

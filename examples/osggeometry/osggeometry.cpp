@@ -737,44 +737,23 @@ int main(int, char**)
 {
       // create the model
     osg::Group* root = new osg::Group;
+	auto geo = osg::createTexturedQuadGeometry(Vec3(-5, 0, 0), Vec3(10, 0, 0), Vec3(0, 10, 0));
+    root->addChild(geo);
+      
+    auto inter = new osgUtil::LineSegmentIntersector(osg::Vec3d(0, 4, 10), osg::Vec3d(0, 4, -1));
+    inter->setIntersectionLimit(inter->LIMIT_NEAREST);
+    osgUtil::IntersectionVisitor v(inter);
 
-    //root->addChild(createScene());
-    //root->addChild(createBackground());
-
-	{
-        auto ss = root->getOrCreateStateSet();
-		ss->setRenderBinDetails(-1, "RenderBin");
-
-        {
-		    auto geo = osg::createTexturedQuadGeometry(Vec3(-5, 0, 0), Vec3(10, 0, 0), Vec3(0, 10, 0));
-            root->addChild(geo);
-        }
-        {
-		    auto geo = osg::createTexturedQuadGeometry(Vec3(0, -5, 0), Vec3(10, 0, 0), Vec3(0, 10, 0));
-            root->addChild(geo);
-        }
-        {
-		    auto geo = osg::createTexturedQuadGeometry(Vec3(0, -5, 0), Vec3(10, 0, 0), Vec3(0, 10, 0));
-            root->addChild(geo);
-            geo->getOrCreateStateSet();
-        }
-     }
-
-    if(0)
-	{
-		auto trans = new osg::MatrixTransform;
-		osg::Matrix m; m.makeTranslate(osg::Vec3d(10, 0, 0));
-		trans->setMatrix(m);
-		trans->addChild(osg::createTexturedQuadGeometry(Vec3(15, 0, 0), Vec3(10, 0, 0), Vec3(0, 10, 0)));
-		root->addChild(trans);
-	}
+    root->accept(v);
+    auto xx = inter->getIntersections();
+    
 
     //osgDB::writeNodeFile(*root,"geometry.osgt");
 
     osgViewer::Viewer viewer;
 
     viewer.addEventHandler(new osgGA::StateSetManipulator(viewer.getCamera()->getOrCreateStateSet()));
-    viewer.setThreadingModel(viewer.SingleThreaded);
+    viewer.setThreadingModel(viewer.ThreadPerCamera);
     //viewer.setRunFrameScheme(viewer.ON_DEMAND);
 
     viewer.addEventHandler(new osgViewer::StatsHandler);
@@ -801,10 +780,12 @@ int main(int, char**)
         camera->setDrawBuffer(buffer);
         camera->setReadBuffer(buffer);
 
+        viewer.realize();
+
         // add this slave camera to the viewer, with a shift left of the projection matrix
-        //viewer.addSlave(camera.get());
-        camera->setProjectionMatrix(viewer.getCamera()->getProjectionMatrix());
-        viewer.setCamera(camera);
+        viewer.addSlave(camera.get());
+        //camera->setProjectionMatrix(viewer.getCamera()->getProjectionMatrix());
+        //viewer.setCamera(camera);
     }
     // add model to viewer.
     viewer.setSceneData( root );
