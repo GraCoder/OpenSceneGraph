@@ -206,7 +206,7 @@ int main(int argc, char** argv)
 			ImGui::Text("counter = ");
 			ImGui::Text("Application average 3f ms/frame (1f FPS)");
 			static char ch[512];
-			if (ImGui::InputText("", ch, 512)) 				{
+			if (ImGui::InputText("123", ch, 512)) 				{
 				printf("");
 			}
 			ImGui::End();

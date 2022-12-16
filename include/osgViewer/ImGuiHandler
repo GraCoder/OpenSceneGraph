@@ -7,41 +7,38 @@
 
 struct ImGuiViewportP;
 
-namespace osgViewer
-{
+namespace osgViewer {
 
-class OSGVIEWER_EXPORT ImGuiHandler : public osgGA::GUIEventHandler
-{
-	friend class ImGuiRenderCallback;
+class OSGVIEWER_EXPORT ImGuiHandler : public osgGA::GUIEventHandler {
+  friend class ImGuiRenderCallback;
+
 public:
+  ImGuiHandler();
 
-    ImGuiHandler();
+  ~ImGuiHandler();
 
-	~ImGuiHandler();
-
-    bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa);
+  bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa);
 
 protected:
+  void initImGui();
 
-	void initImGui();
-
-	void newImGuiFrame(osgViewer::Viewer *viewer);
+  void newImGuiFrame(osgViewer::ViewerBase* viewer, uint32_t frameNum);
 
 private:
 private:
-	osg::ref_ptr<osg::Camera> _camera;
+  osg::ref_ptr<osg::Camera> _camera;
 
-	bool	_initialized;
-	bool	_mousePressed[3];
-	bool	_mouseDoubleClicked[3];
-	int		_mouseWheel;
+  bool _initialized;
+  bool _mousePressed[3];
+  bool _mouseDoubleClicked[3];
+  int _mouseWheel;
 
-	int		_width, _height;
+  int _width, _height;
 
-	osg::ref_ptr<osg::Operation> _renderOperation;
-	ImGuiViewportP* _imvp[2];
+  osg::ref_ptr<osg::Operation> _renderOperation;
+  ImGuiViewportP* _imvp[2];
 };
 
-}
+}  // namespace osgViewer
 
 #endif

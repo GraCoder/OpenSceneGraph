@@ -733,8 +733,25 @@ osg::Vec2(1, 1)
 
 using osg::Vec3;
 
+using namespace osg;
+
 int main(int, char**)
 {
+    {
+        auto m11 = osg::Matrix::lookAt(osg::Vec3d(0, 0, 100), osg::Vec3d(0, 0, 0), osg::Vec3d(0, 1, 0));
+        auto ret =  m11.preMult(osg::Vec4d(0, 10, 0, 1));
+
+    auto vp = new Viewport(0, 0, 800, 600);
+    auto m = vp->computeWindowMatrix();
+    auto m2 = osg::Matrix::inverse(m);
+    float l, r, b, t, n, f;
+    m2.getOrtho(l, r, b, t, n, f);
+    auto m1 = Matrix::ortho2D(0, 800, 0, 600);
+    auto xx = m1 * m * osg::Vec3d(0, 0, 0);
+    auto yy = m1 * m * osg::Vec3d(799, 599, 0);
+    auto zz = m1 * m * osg::Vec3d(1, 0, 0);
+    }
+   
       // create the model
     osg::Group* root = new osg::Group;
 	auto geo = osg::createTexturedQuadGeometry(Vec3(-5, 0, 0), Vec3(10, 0, 0), Vec3(0, 10, 0));
@@ -753,12 +770,12 @@ int main(int, char**)
     osgViewer::Viewer viewer;
 
     viewer.addEventHandler(new osgGA::StateSetManipulator(viewer.getCamera()->getOrCreateStateSet()));
-    viewer.setThreadingModel(viewer.ThreadPerCamera);
+    viewer.setThreadingModel(viewer.SingleThreaded);
     //viewer.setRunFrameScheme(viewer.ON_DEMAND);
 
     viewer.addEventHandler(new osgViewer::StatsHandler);
 
-    if (0) {
+    if (1) {
         osg::ref_ptr<osg::GraphicsContext::Traits> traits = new osg::GraphicsContext::Traits;
 
         traits->x = 50;
@@ -780,7 +797,7 @@ int main(int, char**)
         camera->setDrawBuffer(buffer);
         camera->setReadBuffer(buffer);
 
-        viewer.realize();
+        //viewer.realize();
 
         // add this slave camera to the viewer, with a shift left of the projection matrix
         viewer.addSlave(camera.get());
