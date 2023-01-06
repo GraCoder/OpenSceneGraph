@@ -54,10 +54,13 @@ static ImGuiKey ConvertFromOSGKey(int key)
   }
 }
 
-class ImGuiUpdateOperation : public osg::Operation {
+class ImGuiBegUpdate : public osg::Operation {
 public:
-  ImGuiUpdateOperation() {}
-  ~ImGuiUpdateOperation() {}
+  void operator()(osg::Object*) { ImGui::NewFrame(); }
+};
+
+class ImGuiEndUpdate : public osg::Operation {
+public:
   void operator()(osg::Object*)
   {
     ImGui::EndFrame();
@@ -91,29 +94,25 @@ private:
   ImGuiHandler* _handler;
 };
 
-ImGuiHandler::ImGuiHandler() : _initialized(false)
+ImGuiHandler::ImGuiHandler() : _initialized(false), _imctx(0)
 {
   OSG_INFO << "ImGuiHandler::ImGuiHandler()" << std::endl;
 
   _camera = new osg::Camera;
   _camera->setName("ImGuiCamera");
-  //_camera->getOrCreateStateSet()->setGlobalDefaults();
-  _camera->setRenderer(new Renderer(_camera.get()));
   _camera->setProjectionResizePolicy(osg::Camera::FIXED);
 
-  // osg::DisplaySettings::ShaderHint shaderHint
-  //	= osg::DisplaySettings::instance()->getShaderHint();
-  _camera->setRenderOrder(osg::Camera::POST_RENDER, 999);
+  _camera->setRenderOrder(osg::Camera::POST_RENDER, INT_MAX);
   _camera->setReferenceFrame(osg::Transform::ABSOLUTE_RF);
   _camera->setViewMatrix(osg::Matrix::identity());
 
   _camera->setViewport(0, 0, 800, 640);
 
-  // only clear the depth buffer
   _camera->setClearMask(0);
   _camera->setAllowEventFocus(false);
 
-  _renderOperation = new ImGuiUpdateOperation;
+  _begOp = new ImGuiBegUpdate;
+  _endOp = new ImGuiEndUpdate;
 
   initImGui();
 }
@@ -125,6 +124,11 @@ ImGuiHandler::~ImGuiHandler()
   _imvp[0] = nullptr;
   IM_DELETE(_imvp[1]);
   _imvp[1] = nullptr;
+
+  if (_imctx) {
+    ImGui::DestroyContext(_imctx);
+    _imctx = 0;
+  }
 }
 
 bool ImGuiHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
@@ -142,9 +146,9 @@ bool ImGuiHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdap
   } else {
     _initialized = true;
     io.DisplaySize = ImVec2(800, 640);
-    view->addSlave(_camera);
-    auto camera = view->getCamera();
-    camera->setPostDrawCallback(new ImGuiRenderCallback(this));
+    view->addSlave(_camera, false);
+    _camera->setGraphicsContext(ctx);
+    _camera->setPostDrawCallback(new ImGuiRenderCallback(this));
   }
 
   const bool wantCaptureMouse = io.WantCaptureMouse;
@@ -173,44 +177,52 @@ bool ImGuiHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdap
     }
     case (osgGA::GUIEventAdapter::RELEASE): {
       io.MousePos = ImVec2(ea.getX(), io.DisplaySize.y - ea.getY());
-      _mousePressed[0] = ea.getButtonMask() & osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON;
-      _mousePressed[1] = ea.getButtonMask() & osgGA::GUIEventAdapter::RIGHT_MOUSE_BUTTON;
-      _mousePressed[2] = ea.getButtonMask() & osgGA::GUIEventAdapter::MIDDLE_MOUSE_BUTTON;
-
-      _mouseDoubleClicked[0] = ea.getButtonMask() & osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON;
-      _mouseDoubleClicked[1] = ea.getButtonMask() & osgGA::GUIEventAdapter::RIGHT_MOUSE_BUTTON;
-      _mouseDoubleClicked[2] = ea.getButtonMask() & osgGA::GUIEventAdapter::MIDDLE_MOUSE_BUTTON;
+      if (ea.getButton() & osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON)
+        io.AddMouseButtonEvent(0, false);
+      if (ea.getButton() & osgGA::GUIEventAdapter::RIGHT_MOUSE_BUTTON)
+        io.AddMouseButtonEvent(1, false);
+      if (ea.getButton() & osgGA::GUIEventAdapter::MIDDLE_MOUSE_BUTTON)
+        io.AddMouseButtonEvent(2, false);
       return wantCaptureMouse;
     }
     case (osgGA::GUIEventAdapter::PUSH): {
       io.MousePos = ImVec2(ea.getX(), io.DisplaySize.y - ea.getY());
-      _mousePressed[0] = ea.getButtonMask() & osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON;
-      _mousePressed[1] = ea.getButtonMask() & osgGA::GUIEventAdapter::RIGHT_MOUSE_BUTTON;
-      _mousePressed[2] = ea.getButtonMask() & osgGA::GUIEventAdapter::MIDDLE_MOUSE_BUTTON;
+      if (ea.getButtonMask() & osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON)
+        io.AddMouseButtonEvent(0, true);
+      else if (ea.getButtonMask() & osgGA::GUIEventAdapter::RIGHT_MOUSE_BUTTON)
+        io.AddMouseButtonEvent(1, true);
+      else if (ea.getButtonMask() & osgGA::GUIEventAdapter::MIDDLE_MOUSE_BUTTON)
+        io.AddMouseButtonEvent(2, true);
       return wantCaptureMouse;
     }
     case (osgGA::GUIEventAdapter::DOUBLECLICK): {
       io.MousePos = ImVec2(ea.getX(), io.DisplaySize.y - ea.getY());
-      _mouseDoubleClicked[0] = ea.getButtonMask() & osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON;
-      _mouseDoubleClicked[1] = ea.getButtonMask() & osgGA::GUIEventAdapter::RIGHT_MOUSE_BUTTON;
-      _mouseDoubleClicked[2] = ea.getButtonMask() & osgGA::GUIEventAdapter::MIDDLE_MOUSE_BUTTON;
+      io.MouseDoubleClicked[0] = ea.getButtonMask() & osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON;
+      io.MouseDoubleClicked[1] = ea.getButtonMask() & osgGA::GUIEventAdapter::RIGHT_MOUSE_BUTTON;
+      io.MouseDoubleClicked[2] = ea.getButtonMask() & osgGA::GUIEventAdapter::MIDDLE_MOUSE_BUTTON;
       return wantCaptureMouse;
     }
     case (osgGA::GUIEventAdapter::DRAG):
     case (osgGA::GUIEventAdapter::MOVE): {
-      io.MousePos = ImVec2(ea.getX(), io.DisplaySize.y - ea.getY());
+      io.AddMousePosEvent(ea.getX(), io.DisplaySize.y - ea.getY());
       return wantCaptureMouse;
     }
     case (osgGA::GUIEventAdapter::SCROLL): {
-      _mouseWheel = ea.getScrollingMotion() == osgGA::GUIEventAdapter::SCROLL_UP ? 1.0 : -1.0;
+      io.AddMouseWheelEvent(0, ea.getScrollingMotion() == osgGA::GUIEventAdapter::SCROLL_UP ? 1.0 : -1.0);
       return wantCaptureMouse;
     }
     case (osgGA::GUIEventAdapter::FRAME): {
-      newImGuiFrame(dynamic_cast<osgViewer::ViewerBase*>(&aa), view->getFrameStamp()->getFrameNumber());
+      ImGui::SetCurrentContext(_imctx);
+      auto viewer = dynamic_cast<osgViewer::ViewerBase*>(&aa);
+      auto frameNum = view->getFrameStamp()->getFrameNumber();
+      ImGuiIO& io = ImGui::GetIO();
+      frameNum = frameNum % 2;
+      ImGui::GetCurrentContext()->Viewports[0] = _imvp[frameNum];
+      viewer->addPreUpdateOperation(_begOp);
+      viewer->addPstUpdateOperation(_endOp);
       break;
     }
     case (osgGA::GUIEventAdapter::CLOSE_WINDOW): {
-      printf("");
     }
     default:
       break;
@@ -221,16 +233,19 @@ bool ImGuiHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdap
 void ImGuiHandler::initImGui()
 {
   //--------------------create imgui context----------------------------------
-  auto ctx = ImGui::CreateContext();
-  IM_UNUSED(ctx);
+  _imctx = ImGui::CreateContext();
 
   ImGui::StyleColorsDark();
   ImGuiIO& io = ImGui::GetIO();
 
-  std::string fontPath = "C:\\Windows\\Fonts\\simhei.ttf";
-  if (osgDB::fileExists(fontPath)) {
-    ImFont* font = io.Fonts->AddFontFromFileTTF(fontPath.c_str(), 14.0f, NULL, io.Fonts->GetGlyphRangesChineseSimplifiedCommon());
-    IM_UNUSED(font);
+  std::vector<std::string> fontFiles = {"C:\\Users\\t\\AppData\\Local\\Microsoft\\Windows\\Fonts\\SourceHanSansSC-Regular.otf",
+                                        "C:\\Windows\\Fonts\\simhei.ttf"};
+  for (auto& fontPath : fontFiles) {
+    if (osgDB::fileExists(fontPath)) {
+      ImFont* font = io.Fonts->AddFontFromFileTTF(fontPath.c_str(), 16.0f, NULL, io.Fonts->GetGlyphRangesChineseSimplifiedCommon());
+      IM_UNUSED(font);
+      break;
+    }
   }
 
   // auto* bd = GLWrapper::ImGui_ImplOpenGL3_GetBackendData();
@@ -264,32 +279,6 @@ void ImGuiHandler::initImGui()
 
   //	//io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
   //}
-}
-
-void ImGuiHandler::newImGuiFrame(osgViewer::ViewerBase* viewer, uint32_t frameNum)
-{
-  ImGuiIO& io = ImGui::GetIO();
-
-  // double currentTime = view->getFrameStamp()->getSimulationTime();
-  // io.DeltaTime = currentTime - time_ + 0.0000001;
-  // time_ = currentTime;
-  frameNum = frameNum % 2;
-  ImGui::GetCurrentContext()->Viewports[0] = _imvp[frameNum];
-
-  for (int i = 0; i < 3; i++) {
-    io.MouseDown[i] = _mousePressed[i];
-  }
-
-  for (int i = 0; i < 3; i++) {
-    io.MouseDoubleClicked[i] = _mouseDoubleClicked[i];
-  }
-
-  io.MouseWheel = _mouseWheel;
-  _mouseWheel = 0.0f;
-
-  ImGui::NewFrame();
-
-  viewer->addUpdateOperation(_renderOperation);
 }
 
 }  // namespace osgViewer

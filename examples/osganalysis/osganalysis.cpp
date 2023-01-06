@@ -631,8 +631,12 @@ struct ReportStatsAnimationCompletedCallback : public osgGA::AnimationPathManipu
     }
 };
 
+extern void test();
+
 int main(int argc, char** argv)
 {
+  test();
+
     osg::ArgumentParser arguments(&argc, argv);
 
     // construct the viewer.
