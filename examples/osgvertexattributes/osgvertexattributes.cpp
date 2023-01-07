@@ -292,6 +292,7 @@ osg::Node* createSimpleTestModel()
 
     osg::Geometry* geometry = new osg::Geometry;
     geode->addDrawable(geometry);
+    geometry->setUseVertexBufferObjects(true);
 
     osg::Vec3Array* vertices = new osg::Vec3Array;
     vertices->push_back(osg::Vec3(0.0,0.0,0.0));

@@ -85,7 +85,8 @@ public:
 
     auto frameNum = renderInfo.getState()->getFrameStamp()->getFrameNumber();
     frameNum = frameNum % 2;
-    auto data = &_handler->_imvp[frameNum]->DrawDataP;
+    auto vp = static_cast<ImGuiViewportP*>(_handler->_imvp[frameNum]);
+    auto data = &vp->DrawDataP;
     extWrap->ImGui_ImplOpenGL3_RenderDrawData(data);
   }
 
@@ -119,8 +120,9 @@ ImGuiHandler::ImGuiHandler() : _initialized(false), _imctx(0)
 
 ImGuiHandler::~ImGuiHandler()
 {
+  auto vp = static_cast<ImGuiViewportP*>(_imvp[0]);
   if (_imvp[0])
-    ImGui::GetCurrentContext()->Viewports[0] = _imvp[0];
+    ImGui::GetCurrentContext()->Viewports[0] = vp;
   _imvp[0] = nullptr;
   IM_DELETE(_imvp[1]);
   _imvp[1] = nullptr;
@@ -215,9 +217,10 @@ bool ImGuiHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdap
       ImGui::SetCurrentContext(_imctx);
       auto viewer = dynamic_cast<osgViewer::ViewerBase*>(&aa);
       auto frameNum = view->getFrameStamp()->getFrameNumber();
-      ImGuiIO& io = ImGui::GetIO();
       frameNum = frameNum % 2;
-      ImGui::GetCurrentContext()->Viewports[0] = _imvp[frameNum];
+
+      auto vp = static_cast<ImGuiViewportP*>(_imvp[frameNum]);
+      ImGui::GetCurrentContext()->Viewports[0] = vp;
       viewer->addPreUpdateOperation(_begOp);
       viewer->addPstUpdateOperation(_endOp);
       break;

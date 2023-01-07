@@ -6,7 +6,7 @@
 #include <osgViewer/Export>
 
 struct ImGuiContext;
-struct ImGuiViewportP;
+struct ImGuiViewport;
 
 namespace osgViewer {
 
@@ -32,7 +32,7 @@ private:
   int _width, _height;
 
   ImGuiContext* _imctx;
-  ImGuiViewportP* _imvp[2];
+  ImGuiViewport* _imvp[2];
 };
 
 }  // namespace osgViewer
