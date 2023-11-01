@@ -13,6 +13,8 @@
 #include <osgWidget/Label>
 #include <osgWidget/ViewerEventHandlers>
 
+#if 0
+
 const unsigned int MASK_2D = 0xF0000000;
 
 class Notebook: public osgWidget::Box {
@@ -117,8 +119,23 @@ void bound(osg::Node* node) {
     osgWidget::warn() << "center: " << bs.center() << " radius: " << bs.radius() << std::endl;
 }
 
+#endif
+
 int main(int, char**)
 {
+  auto m = osg::Matrix::lookAt(osg::Vec3d{0, 0, 100}, {0, 0, 0}, {0, 1, 0});
+  auto m1 = osg::Matrix::frustum(-1, 1, -1, 1, 1, 100);
+
+  m1.preMult(m);
+
+  osg::Matrixd mm;
+  mm.transpose(m1);
+
+  auto pp = mm.preMult(osg::Vec4d(1, 0, 0, 1));
+  printf("");
+
+
+#if 0
     osgViewer::Viewer viewer;
 
     osgWidget::WindowManager* wm = new osgWidget::WindowManager(
@@ -141,4 +158,6 @@ int main(int, char**)
     wm->addChild(notebook2);
 
     return osgWidget::createExample(viewer, wm);
+
+#endif
 }

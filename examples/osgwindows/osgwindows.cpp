@@ -128,6 +128,8 @@ int main( int argc, char **argv )
         traits->sharedContext = gc;
         traits->readDISPLAY();
         traits->setUndefinedScreenDetailsToDefaultScreen();
+        traits->sampleBuffers = 1;
+        traits->samples = 16;
 
         osg::ref_ptr<osg::GraphicsContext> gc1 = osg::GraphicsContext::createGraphicsContext(traits.get());
         gc1->realize();

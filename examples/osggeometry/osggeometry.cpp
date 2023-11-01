@@ -735,76 +735,88 @@ using osg::Vec3;
 
 using namespace osg;
 
+#define PI 3.1415926
+
 int main(int, char**)
 {
-    {
-        auto m11 = osg::Matrix::lookAt(osg::Vec3d(0, 0, 100), osg::Vec3d(0, 0, 0), osg::Vec3d(0, 1, 0));
-        auto ret =  m11.preMult(osg::Vec4d(0, 10, 0, 1));
+  auto xx1 = osg::Image::computeRowWidthInBytes(101, GL_RGB, GL_UNSIGNED_BYTE, 4);
+  auto m = osg::Matrix::rotate(PI / 4, osg::Vec3d(1, 1, 1));
 
-    auto vp = new Viewport(0, 0, 800, 600);
-    auto m = vp->computeWindowMatrix();
-    auto m2 = osg::Matrix::inverse(m);
-    float l, r, b, t, n, f;
-    m2.getOrtho(l, r, b, t, n, f);
-    auto m1 = Matrix::ortho2D(0, 800, 0, 600);
-    auto xx = m1 * m * osg::Vec3d(0, 0, 0);
-    auto yy = m1 * m * osg::Vec3d(799, 599, 0);
-    auto zz = m1 * m * osg::Vec3d(1, 0, 0);
-    }
-   
-      // create the model
-    osg::Group* root = new osg::Group;
-	auto geo = osg::createTexturedQuadGeometry(Vec3(-5, 0, 0), Vec3(10, 0, 0), Vec3(0, 10, 0));
-    root->addChild(geo);
-      
-    auto inter = new osgUtil::LineSegmentIntersector(osg::Vec3d(0, 4, 10), osg::Vec3d(0, 4, -1));
-    inter->setIntersectionLimit(inter->LIMIT_NEAREST);
-    osgUtil::IntersectionVisitor v(inter);
+  auto m1 = osg::Matrix::translate(osg::Vec3d(100, 100, 100));
 
-    root->accept(v);
-    auto xx = inter->getIntersections();
-    
+  auto m2 = m;
+  m2.postMult(m1);
+  m2.preMult(osg::Matrix::translate(osg::Vec3d(10, 0, 0)));
+  m2.preMult(osg::Matrix::rotate(PI / 3, osg::Vec3d(1, 0, 0)));
 
-    //osgDB::writeNodeFile(*root,"geometry.osgt");
+  osg::Vec4d v1(1, 0, 0, 0);
+  auto r1 = m2.preMult(v1);
 
-    osgViewer::Viewer viewer;
+  auto m3 = m;
+  m3.preMult(osg::Matrix::rotate(PI / 3, osg::Vec3d(1, 0, 0)));
+  auto r2 = m3.preMult(v1);
 
-    viewer.addEventHandler(new osgGA::StateSetManipulator(viewer.getCamera()->getOrCreateStateSet()));
-    viewer.setThreadingModel(viewer.SingleThreaded);
-    //viewer.setRunFrameScheme(viewer.ON_DEMAND);
+  // create the model
+  osg::Group* root = new osg::Group;
+  auto geo = osg::createTexturedQuadGeometry(Vec3(-5, 0, 0), Vec3(10, 0, 0), Vec3(0, 10, 0));
+  auto ss = geo->getOrCreateStateSet();
+  ss->getOrCreateUniform("x1111", osg::Uniform::BOOL)->set(1);
+  auto vec3a = new osg::Vec3Array;
+  vec3a->push_back(osg::Vec3(1, 0, 0));
+  vec3a->push_back(osg::Vec3(1, 0, 0));
+  vec3a->push_back(osg::Vec3(1, 0, 0));
+  vec3a->push_back(osg::Vec3(1, 0, 0));
+  vec3a->setBinding(osg::Array::BIND_PER_VERTEX);
+  geo->setColorArray(vec3a);
+  root->addChild(geo);
 
-    viewer.addEventHandler(new osgViewer::StatsHandler);
+  auto inter = new osgUtil::LineSegmentIntersector(osg::Vec3d(0, 4, 10), osg::Vec3d(0, 4, -1));
+  inter->setIntersectionLimit(inter->LIMIT_NEAREST);
+  osgUtil::IntersectionVisitor v(inter);
 
-    if (1) {
-        osg::ref_ptr<osg::GraphicsContext::Traits> traits = new osg::GraphicsContext::Traits;
+  root->accept(v);
+  auto xx = inter->getIntersections();
 
-        traits->x = 50;
-        traits->y = 50;
-        traits->width = 600;
-        traits->height = 480;
-        traits->windowDecoration = true;
-        traits->doubleBuffer = true;
-        traits->sharedContext = 0;
-        traits->readDISPLAY();
-        traits->setUndefinedScreenDetailsToDefaultScreen();
+  // osgDB::writeNodeFile(*root,"geometry.osgt");
 
-        osg::ref_ptr<osg::GraphicsContext> gc = osg::GraphicsContext::createGraphicsContext(traits.get());
+  osgViewer::Viewer viewer;
 
-        osg::ref_ptr<osg::Camera> camera = new osg::Camera;
-        camera->setGraphicsContext(gc.get());
-        camera->setViewport(new osg::Viewport(0, 0, traits->width, traits->height));
-        GLenum buffer = traits->doubleBuffer ? GL_BACK : GL_FRONT;
-        camera->setDrawBuffer(buffer);
-        camera->setReadBuffer(buffer);
+  viewer.addEventHandler(new osgGA::StateSetManipulator(viewer.getCamera()->getOrCreateStateSet()));
+  viewer.setThreadingModel(viewer.SingleThreaded);
+  // viewer.setRunFrameScheme(viewer.ON_DEMAND);
 
-        //viewer.realize();
+  viewer.addEventHandler(new osgViewer::StatsHandler);
 
-        // add this slave camera to the viewer, with a shift left of the projection matrix
-        viewer.addSlave(camera.get());
-        //camera->setProjectionMatrix(viewer.getCamera()->getProjectionMatrix());
-        //viewer.setCamera(camera);
-    }
-    // add model to viewer.
-    viewer.setSceneData( root );
-    return viewer.run();
+  if (1) {
+    osg::ref_ptr<osg::GraphicsContext::Traits> traits = new osg::GraphicsContext::Traits;
+
+    traits->x = 50;
+    traits->y = 50;
+    traits->width = 600;
+    traits->height = 480;
+    traits->windowDecoration = true;
+    traits->doubleBuffer = true;
+    traits->sharedContext = 0;
+    traits->readDISPLAY();
+    traits->setUndefinedScreenDetailsToDefaultScreen();
+
+    osg::ref_ptr<osg::GraphicsContext> gc = osg::GraphicsContext::createGraphicsContext(traits.get());
+
+    osg::ref_ptr<osg::Camera> camera = new osg::Camera;
+    camera->setGraphicsContext(gc.get());
+    camera->setViewport(new osg::Viewport(0, 0, traits->width, traits->height));
+    GLenum buffer = traits->doubleBuffer ? GL_BACK : GL_FRONT;
+    camera->setDrawBuffer(buffer);
+    camera->setReadBuffer(buffer);
+
+    // viewer.realize();
+
+    // add this slave camera to the viewer, with a shift left of the projection matrix
+    viewer.addSlave(camera.get());
+    // camera->setProjectionMatrix(viewer.getCamera()->getProjectionMatrix());
+    // viewer.setCamera(camera);
+  }
+  // add model to viewer.
+  viewer.setSceneData(root);
+  return viewer.run();
 }

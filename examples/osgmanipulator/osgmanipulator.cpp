@@ -164,6 +164,7 @@ osgManipulator::Dragger* createDragger(const std::string& name)
     {
         osgManipulator::TabBoxDragger* d = new osgManipulator::TabBoxDragger();
         d->setupDefaultGeometry();
+        d->setPlaneColor(osg::Vec4(0, 0, 0.2, 0.2));
         dragger = d;
     }
 
@@ -350,13 +351,13 @@ osg::Node* createDemoScene(bool fixedSizeInScreen) {
     matirial->setShininess(osg::Material::FRONT_AND_BACK, 64.0f);
     root->getOrCreateStateSet()->setAttributeAndModes(matirial.get(), osg::StateAttribute::ON);
 
-    transform_1.get()->addChild(addDraggerToScene(geode_1.get(),"TabBoxDragger",fixedSizeInScreen));
-    transform_2.get()->addChild(addDraggerToScene(geode_2.get(),"TabPlaneDragger",fixedSizeInScreen));
-    transform_3.get()->addChild(addDraggerToScene(geode_3.get(),"TabBoxTrackballDragger",fixedSizeInScreen));
+    //transform_1.get()->addChild(addDraggerToScene(geode_1.get(),"TabBoxDragger",fixedSizeInScreen));
+    //transform_2.get()->addChild(addDraggerToScene(geode_2.get(),"TabPlaneDragger",fixedSizeInScreen));
+    //transform_3.get()->addChild(addDraggerToScene(geode_3.get(),"TabBoxTrackballDragger",fixedSizeInScreen));
     transform_4.get()->addChild(addDraggerToScene(geode_4.get(),"TrackballDragger",fixedSizeInScreen));
-    transform_5.get()->addChild(addDraggerToScene(geode_5.get(),"Translate1DDragger",fixedSizeInScreen));
-    transform_6.get()->addChild(addDraggerToScene(geode_6.get(),"Translate2DDragger",fixedSizeInScreen));
-    transform_7.get()->addChild(addDraggerToScene(geode_7.get(),"TranslateAxisDragger",fixedSizeInScreen));
+    //transform_5.get()->addChild(addDraggerToScene(geode_5.get(),"Translate1DDragger",fixedSizeInScreen));
+    //transform_6.get()->addChild(addDraggerToScene(geode_6.get(),"Translate2DDragger",fixedSizeInScreen));
+    //transform_7.get()->addChild(addDraggerToScene(geode_7.get(),"TranslateAxisDragger",fixedSizeInScreen));
 
     root->addChild(transform_1.get());
     root->addChild(transform_2.get());

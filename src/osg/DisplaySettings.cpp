@@ -198,10 +198,10 @@ void DisplaySettings::setDefaults()
     _stereo = false;
     _stereoMode = ANAGLYPHIC;
     _eyeSeparation = 0.05f;
-    //_screenWidth = 0.325f;
-    //_screenHeight = 0.26f;
-    _screenWidth = 0.721687836;
-    _screenHeight = 0.577350269;
+    _screenWidth = 0.325f;
+    _screenHeight = 0.26f;
+    //_screenWidth = 0.721687836;
+    //_screenHeight = 0.577350269;
     _screenDistance = 0.5f;
 
     _splitStereoHorizontalEyeMapping = LEFT_EYE_LEFT_VIEWPORT;
